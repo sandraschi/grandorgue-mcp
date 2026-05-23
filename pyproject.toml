@@ -23,6 +23,8 @@ dev = [
     "ruff>=0.9",
     "playwright>=1.50",
 ]
+icons = ["pillow>=11"]
+build = ["pyinstaller>=6"]
 
 [project.scripts]
 grandorgue-mcp = "grandorgue_mcp.server:main"

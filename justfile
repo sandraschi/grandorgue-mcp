@@ -33,6 +33,22 @@ install-web:
 web start:
     .\web_sota\start.ps1
 
+# Generate Tauri app icons
+icons:
+    uv run python scripts/generate_icons.py
+
+# Build Tauri native desktop app (full release pipeline)
+build-native:
+    Set-Location '{{justfile_directory()}}\native'
+    $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+    .\build.ps1
+
+# Build Tauri native app (debug, skip PyInstaller)
+build-native-debug:
+    Set-Location '{{justfile_directory()}}\native'
+    $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+    npx @tauri-apps/cli build --debug
+
 # Clean build artifacts
 clean:
     powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue dist, build, .ruff_cache, .pytest_cache, web_sota/node_modules, web_sota/dist; Get-ChildItem -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned.'"
