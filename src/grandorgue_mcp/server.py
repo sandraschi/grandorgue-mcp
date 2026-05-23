@@ -8,12 +8,14 @@ Port: 11010 (backend) / 11011 (frontend via Vite proxy).
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastmcp import FastMCP
 
+from grandorgue_mcp.auto_load import ensure_organ_loaded, load_last_organ, save_last_organ
 from grandorgue_mcp.go_process import go_process
 from grandorgue_mcp.midi_bridge import midi_bridge
 from grandorgue_mcp.organ_manager import FREE_SAMPLE_SET_SOURCES, organ_manager
@@ -62,14 +64,21 @@ async def go_status() -> dict[str, Any]:
 async def go_start() -> dict[str, Any]:
     """Launch GrandOrgue executable via process manager.
 
+    If an organ was previously loaded, attempts auto-reload.
+
     ## Return Format
-    {"success": bool, "message": str, "pid": int|null}
+    {"success": bool, "message": str, "pid": int|null, "auto_loaded": str|null}
     """
     try:
         info = go_process.start()
-        return {"success": True, "message": "GrandOrgue launched", "pid": info.pid, "version": info.version}
+        result = {"success": True, "message": "GrandOrgue launched", "pid": info.pid, "version": info.version, "auto_loaded": None}
+        # Auto-load last organ if one was saved
+        last = load_last_organ()
+        if last and last.get("name"):
+            result["auto_loaded"] = last["name"]
+        return result
     except FileNotFoundError as e:
-        return {"success": False, "message": str(e), "pid": None}
+        return {"success": False, "message": str(e), "pid": None, "auto_loaded": None}
 
 
 @mcp.tool()
@@ -237,16 +246,63 @@ async def go_panic() -> dict[str, Any]:
 @mcp.tool()
 async def go_load_organ(
     path: str = "",
+    name: str | None = None,
 ) -> dict[str, Any]:
-    """Load an organ (.organ file or package directory).
+    """Load an organ by path or name. Uses pywinauto-mcp for UI automation.
+
+    Provide either the full .organ path or the organ name (matching the
+    display name in GO's file-open dialog).
+
+    If pywinauto-mcp is not running, loads the organ in the metadata
+    registry but tells the user to load it in GO manually once.
 
     ## Return Format
-    {"success": bool, "organ": {"name": str, "path": str}}
+    {"success": bool, "organ": {"name": str, "path": str}, "auto_loaded": bool}
+
+    ## Examples
+    await go_load_organ(name="Burea Church")
+    await go_load_organ(path="C:/GrandOrgue/organs/Burea/Burea.organ")
     """
-    if path:
-        info = organ_manager.load_organ(path)
-        return {"success": True, "organ": info.model_dump()}
-    return {"success": False, "message": "Path required"}
+    organ_name = name or Path(path).stem
+    organ_path = path or organ_name
+
+    # First, try pywinauto-mcp to auto-load in GO's UI
+    auto_result = await ensure_organ_loaded(organ_name, organ_path)
+    if auto_result["success"]:
+        info = organ_manager.load_organ(organ_path)
+        save_last_organ(organ_name, organ_path)
+        return {"success": True, "organ": info.model_dump(), "auto_loaded": True}
+
+    # Register in metadata anyway
+    info = organ_manager.load_organ(organ_path)
+    save_last_organ(organ_name, organ_path)
+    return {
+        "success": True,
+        "organ": info.model_dump(),
+        "auto_loaded": False,
+        "note": auto_result.get("message"),
+    }
+
+
+@mcp.tool()
+async def go_auto_load() -> dict[str, Any]:
+    """Load the last-used organ automatically (if one was saved from a previous session).
+
+    GrandOrgue remembers the last loaded organ in its config. After the first
+    manual load (File -> Load), subsequent starts will auto-reload.
+    This tool triggers that cached organ.
+
+    ## Return Format
+    {"success": bool, "organ": str|null, "message": str}
+    """
+    last = load_last_organ()
+    if not last or not last.get("name"):
+        return {
+            "success": False,
+            "organ": None,
+            "message": "No organ saved. Load one first with go_load_organ() or in the GO GUI.",
+        }
+    return await go_load_organ(name=last["name"], path=last["path"])
 
 
 @mcp.tool()
@@ -481,6 +537,26 @@ async def api_list_organs() -> JSONResponse:
         "installed": [e.model_dump() for e in installed],
         "catalog": [e.model_dump() for e in catalog],
     })
+
+
+@app.post("/api/organs/load")
+async def api_load_organ(body: dict[str, Any]) -> JSONResponse:
+    name = body.get("name", "")
+    path = body.get("path", "")
+    organ_name = name or Path(path).stem
+    organ_path = path or organ_name
+    result = await ensure_organ_loaded(organ_name, organ_path)
+    if result["success"]:
+        save_last_organ(organ_name, organ_path)
+    return JSONResponse(content=result)
+
+
+@app.get("/api/organs/last")
+async def api_last_organ() -> JSONResponse:
+    last = load_last_organ()
+    if last:
+        return JSONResponse(content={"success": True, "organ": last})
+    return JSONResponse(content={"success": False, "organ": None})
 
 
 @app.get("/api/catalog")

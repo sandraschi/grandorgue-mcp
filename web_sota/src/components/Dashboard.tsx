@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
-import { Play, Square, Link, Unlink, AlertTriangle } from "lucide-react";
+import { Play, Square, Link, Unlink, AlertTriangle, RotateCcw } from "lucide-react";
 import { api, type OrganStatus, type MidiPort } from "@/api/client";
 
 export default function Dashboard() {
   const [status, setStatus] = useState<OrganStatus | null>(null);
   const [ports, setPorts] = useState<{ inputs: MidiPort[]; outputs: MidiPort[] } | null>(null);
+  const [lastOrgan, setLastOrgan] = useState<{ name: string; path: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [autoLoading, setAutoLoading] = useState(false);
 
   const refresh = async () => {
     try {
-      const [s, p] = await Promise.all([api.status(), api.midiPorts()]);
+      const [s, p, lo] = await Promise.all([api.status(), api.midiPorts(), api.lastOrgan()]);
       setStatus(s);
       setPorts(p);
+      if (lo.organ) setLastOrgan(lo.organ);
     } catch {}
   };
 
@@ -21,6 +24,7 @@ export default function Dashboard() {
   const handleStop = async () => { setLoading(true); await api.goStop(); await refresh(); setLoading(false); };
   const handleConnect = async () => { await api.midiConnect(); await refresh(); };
   const handleDisconnect = async () => { await api.midiDisconnect(); await refresh(); };
+  const handleAutoLoad = async () => { setAutoLoading(true); await api.post("/organs/load", { name: lastOrgan?.name }); setAutoLoading(false); await refresh(); };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -36,22 +40,37 @@ export default function Dashboard() {
 
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">
-        <button onClick={handleStart} disabled={loading || status?.go_running} className="btn-green">
+        <button onClick={handleStart} disabled={loading || status?.go_running} className="flex items-center gap-1.5 px-4 py-2 bg-green-900 text-green-300 rounded-lg text-sm hover:bg-green-800 disabled:opacity-40 transition-colors">
           <Play size={16} /> Start GrandOrgue
         </button>
-        <button onClick={handleStop} disabled={loading || !status?.go_running} className="btn-red">
+        <button onClick={handleStop} disabled={loading || !status?.go_running} className="flex items-center gap-1.5 px-4 py-2 bg-red-900 text-red-300 rounded-lg text-sm hover:bg-red-800 disabled:opacity-40 transition-colors">
           <Square size={16} /> Stop GrandOrgue
         </button>
-        <button onClick={handleConnect} disabled={status?.midi_connected} className="btn-blue">
+        <button onClick={handleConnect} disabled={status?.midi_connected} className="flex items-center gap-1.5 px-4 py-2 bg-blue-900 text-blue-300 rounded-lg text-sm hover:bg-blue-800 disabled:opacity-40 transition-colors">
           <Link size={16} /> Connect MIDI
         </button>
-        <button onClick={handleDisconnect} disabled={!status?.midi_connected} className="btn-zinc">
+        <button onClick={handleDisconnect} disabled={!status?.midi_connected} className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 text-zinc-400 rounded-lg text-sm hover:bg-zinc-700 disabled:opacity-40 transition-colors">
           <Unlink size={16} /> Disconnect MIDI
         </button>
-        <button onClick={() => api.panic()} className="btn-red-outline">
+        <button onClick={() => api.panic()} className="flex items-center gap-1.5 px-4 py-2 border border-red-800 text-red-400 rounded-lg text-sm hover:bg-red-900/20 transition-colors">
           <AlertTriangle size={16} /> Panic
         </button>
       </div>
+
+      {/* Auto-Load Card */}
+      {lastOrgan && (
+        <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs text-zinc-500 mb-1">Last Loaded Organ</div>
+              <div className="text-sm font-medium text-organ-gold">{lastOrgan.name}</div>
+            </div>
+            <button onClick={handleAutoLoad} disabled={autoLoading} className="flex items-center gap-1.5 px-4 py-2 bg-organ-gold/20 text-organ-gold rounded-lg text-sm hover:bg-organ-gold/30 disabled:opacity-40 transition-colors">
+              <RotateCcw size={16} className={autoLoading ? "animate-spin" : ""} /> {autoLoading ? "Loading..." : "Auto-Load"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MIDI Ports */}
       {ports && (

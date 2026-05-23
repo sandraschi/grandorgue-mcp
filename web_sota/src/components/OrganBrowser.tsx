@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
-import { Download, Globe } from "lucide-react";
+import { Download, Globe, RotateCcw, RefreshCw } from "lucide-react";
 import { api } from "@/api/client";
 
 export default function OrganBrowser() {
   const [installed, setInstalled] = useState<any[]>([]);
   const [catalog, setCatalog] = useState<any[]>([]);
+  const [loading, setLoading] = useState<string | null>(null);
 
   useEffect(() => {
     api.organs().then((d) => { setInstalled(d.installed); setCatalog(d.catalog); }).catch(() => {});
   }, []);
+
+  const handleLoad = async (name: string) => {
+    setLoading(name);
+    try {
+      await api.post("/organs/load", { name });
+    } catch {}
+    setLoading(null);
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -24,7 +33,9 @@ export default function OrganBrowser() {
               <div key={o.name} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 hover:border-organ-gold/30 transition-colors">
                 <div className="font-medium text-zinc-200">{o.name}</div>
                 <div className="text-xs text-zinc-600 mt-1 truncate">{o.path}</div>
-                <button className="mt-3 px-3 py-1 text-xs bg-organ-gold/20 text-organ-gold rounded hover:bg-organ-gold/30">Load</button>
+                <button onClick={() => handleLoad(o.name)} disabled={loading === o.name} className="mt-3 px-3 py-1 text-xs bg-organ-gold/20 text-organ-gold rounded hover:bg-organ-gold/30 disabled:opacity-50">
+                  {loading === o.name ? "Loading..." : "Load"}
+                </button>
               </div>
             ))}
           </div>

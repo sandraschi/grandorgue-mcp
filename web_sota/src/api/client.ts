@@ -58,4 +58,6 @@ export const api = {
   goStop: () => fetchJSON<{ success: boolean }>("/go/stop", { method: "POST" }),
   goStatus: () => fetchJSON<{ running: boolean; pid: number | null }>("/go/status"),
   organs: () => fetchJSON<{ installed: any[]; catalog: any[] }>("/organs"),
+  lastOrgan: () => fetchJSON<{ success: boolean; organ: { name: string; path: string } | null }>("/organs/last"),
+  post: (url: string, body: any) => fetchJSON<any>(url, { method: "POST", body: JSON.stringify(body) }),
 };
