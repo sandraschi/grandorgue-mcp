@@ -8,6 +8,7 @@ build/
 .pytest_cache/
 *.bak
 *.spec
+*.tsbuildinfo
 .env
 web_sota/node_modules/
 web_sota/dist/
