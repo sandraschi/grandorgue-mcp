@@ -1,5 +1,15 @@
 # GrandOrgue MCP
 
+<p align="center">
+  <a href="https://github.com/sandraschi/grandorgue-mcp"><img src="https://img.shields.io/github/stars/sandraschi/grandorgue-mcp?style=flat-square" alt="Stars"></a>
+  <a href="https://github.com/sandraschi/grandorgue-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
+  <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
+  <a href=""><img src="https://img.shields.io/badge/MIDI-bridge-009688?style=flat-square" alt="MIDI"></a>
+  <a href=""><img src="https://img.shields.io/badge/fleet-SOTA-6366f1?style=flat-square" alt="Fleet SOTA"></a>
+  <a href="https://grandorgue-mcp.fleet.ai"><img src="https://img.shields.io/badge/React-18-d1d5db?style=flat-square&logo=react&logoColor=61DAFB" alt="React"></a>
+</p>
+
 **Modern Organ Console — a free control surface for the GrandOrgue pipe organ simulator.**
 
 GrandOrgue MCP gives GrandOrgue a beautiful, responsive web console + AI-agent-capable backend. It connects to GrandOrgue via MIDI and replaces its aging wxWidgets GUI with a modern React dashboard. Every stop, piston, manual, and swell pedal is controllable from any browser — or from an AI agent via MCP tools.
