@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.ruff_cache/
+.pytest_cache/
+*.bak
+.env
+web_sota/node_modules/
+web_sota/dist/
+native/target/
+native/binaries/
+native/gen/
