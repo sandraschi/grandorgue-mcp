@@ -1,24 +1,27 @@
+param([switch]$Headless, [switch]$BackendOnly, [switch]$NoBrowser)
+$ErrorActionPreference = "Stop"
+$ScriptRoot = Split-Path -Parent $PSCommandPath
 $BackendPort = 11010
 $FrontendPort = 11011
 
 # Clear port zombies
-Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
-Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
 
-Start-Sleep -Milliseconds 500
-
-# Start backend
-$BackendJob = Start-Job -ScriptBlock {
-    Set-Location $using:PWD
-    & "C:\Users\sandr\.local\bin\uv.exe" run grandorgue-mcp 2>&1
-}
+# Start backend via Start-Job with proper working directory
+$BackendJob = Start-Job -Name "grandorgue-backend" -ScriptBlock {
+    param($Root, $Port)
+    Set-Location $Root
+    uv run grandorgue-mcp
+} -ArgumentList $ScriptRoot, $BackendPort
 
 Write-Host "Starting GrandOrgue MCP backend on port $BackendPort ..."
 
-# Wait for backend health
-$Timeout = 30
+# Readiness poll
 $Ready = $false
-for ($i = 0; $i -lt $Timeout; $i++) {
+for ($i = 0; $i -lt 60; $i++) {
     try {
         $Response = Invoke-WebRequest -Uri "http://127.0.0.1:${BackendPort}/health" -UseBasicParsing -TimeoutSec 2
         if ($Response.StatusCode -eq 200) { $Ready = $true; break }
@@ -26,14 +29,29 @@ for ($i = 0; $i -lt $Timeout; $i++) {
     Start-Sleep -Seconds 1
 }
 if (-not $Ready) {
-    Write-Host "ERROR: Backend failed to start within ${Timeout}s"
+    Write-Host "ERROR: Backend failed to start within 60s"
     Receive-Job $BackendJob
     exit 1
 }
 Write-Host "Backend ready."
 
-Write-Host "Starting frontend on port $FrontendPort ..."
-Start-Process -FilePath "http://127.0.0.1:${FrontendPort}"
+if ($BackendOnly) { return }
 
-Set-Location "$PSScriptRoot\web_sota"
-npm run dev
+# Start frontend via Start-Process with -WorkingDirectory
+$WebRoot = Join-Path $ScriptRoot "web_sota"
+Write-Host "Starting frontend on port $FrontendPort ..."
+$FrontendProcess = Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c npx vite --port $FrontendPort --host" -WorkingDirectory $WebRoot -PassThru
+
+# Auto-open browser
+if (-not $NoBrowser) {
+    Start-Process "http://127.0.0.1:${FrontendPort}"
+}
+
+# Keep-alive
+while ($true) {
+    if ($BackendJob.State -eq "Completed" -or $BackendJob.State -eq "Failed") {
+        Receive-Job $BackendJob
+        break
+    }
+    Start-Sleep -Seconds 2
+}

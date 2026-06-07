@@ -1,25 +1,30 @@
+param([switch]$Headless, [switch]$BackendOnly, [switch]$NoBrowser)
+$ErrorActionPreference = "Stop"
+$ScriptRoot = Split-Path -Parent $PSCommandPath
 $FrontendPort = 11011
+$BackendPort = 11010
 
-Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+# Clear port zombies
+Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+Get-NetTCPConnection -LocalPort $BackendPort -ErrorAction SilentlyContinue |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
 
-Start-Sleep -Milliseconds 500
+Write-Host "Starting frontend on port $FrontendPort ..."
 
-Set-Location "$PSScriptRoot"
+Start-Process -NoNewWindow -FilePath "cmd.exe" -ArgumentList "/c npx vite --port $FrontendPort --host" -WorkingDirectory $ScriptRoot
 
-# Poll for Vite readiness then open browser
-$Job = Start-Job -ScriptBlock {
-    Set-Location $using:PWD
-    npm run dev 2>&1
+if (-not $NoBrowser) {
+    $Ready = $false
+    for ($i = 0; $i -lt 30; $i++) {
+        try {
+            $null = Invoke-WebRequest -Uri "http://127.0.0.1:${FrontendPort}" -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
+            $Ready = $true
+            break
+        } catch {}
+        Start-Sleep -Seconds 1
+    }
+    if ($Ready) {
+        Start-Process "http://127.0.0.1:${FrontendPort}"
+    }
 }
-
-$Timeout = 30
-for ($i = 0; $i -lt $Timeout; $i++) {
-    try {
-        $null = Invoke-WebRequest -Uri "http://127.0.0.1:${using:FrontendPort}" -UseBasicParsing -TimeoutSec 2
-        Start-Process "http://127.0.0.1:${using:FrontendPort}"
-        break
-    } catch {}
-    Start-Sleep -Seconds 1
-}
-
-Wait-Job $Job

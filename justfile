@@ -1,7 +1,7 @@
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
 default:
-    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File ../mcp-central-docs/scripts/just-dashboard.ps1 -Path .
+    @just --list
 
 # Run backend only (port 11010)
 run server:
@@ -18,8 +18,13 @@ format fmt:
 
 # Run tests
 test:
-    uv sync --extra dev
+    uv sync --all-extras
     uv run pytest tests -v
+
+# CI pipeline (lint + test)
+ci:
+    uv run ruff check src/ tests/
+    uv run pytest tests -q
 
 # Sync deps (backend)
 install:
@@ -55,4 +60,5 @@ clean:
 
 # Backend health check
 health:
-    curl -s http://127.0.0.1:11010/health
+    curl.exe -s http://127.0.0.1:11010/health
+
