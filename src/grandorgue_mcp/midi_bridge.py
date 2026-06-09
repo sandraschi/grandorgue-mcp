@@ -46,6 +46,20 @@ class MidiBridge:
     def connected(self) -> bool:
         return self._connected
 
+    @property
+    def go_input_name(self) -> str:
+        return self._go_input_name
+
+    @property
+    def go_output_name(self) -> str:
+        return self._go_output_name
+
+    def configure(self, go_input_name: str, go_output_name: str) -> None:
+        if self._connected:
+            raise RuntimeError("Disconnect MIDI before changing port names")
+        self._go_input_name = go_input_name
+        self._go_output_name = go_output_name
+
     def list_ports(self) -> MidiDeviceStatus:
         if not _MIDO_OK:
             return MidiDeviceStatus()

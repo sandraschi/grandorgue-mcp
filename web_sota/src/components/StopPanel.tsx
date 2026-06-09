@@ -28,7 +28,7 @@ export default function StopPanel({ stops, stopState, onToggle }: Props) {
                   onClick={() => onToggle(stop.cc)}
                   className={`stop-tab ${stopState[stop.cc] ? "stop-tab-on" : "stop-tab-off"}`}
                 >
-                  <span className="writing-vertical-rl rotate-180">{stop.name}</span>
+                  <span className="stop-tab-label">{stop.name}</span>
                 </button>
               ))}
           </div>

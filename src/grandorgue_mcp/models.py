@@ -64,6 +64,14 @@ class GrandOrgueProcessInfo(BaseModel):
     exe_path: str | None = None
     config_path: str | None = None
     version: str | None = None
+    error: str | None = None
+
+
+class AppSettings(BaseModel):
+    go_exe_path: str = r"C:\Program Files\GrandOrgue\bin\GrandOrgue.exe"
+    midi_input_port: str = "GrandOrgue MCP Out"
+    midi_output_port: str = "GrandOrgue MCP In"
+    config_dir: str = ""
 
 
 class SampleSetEntry(BaseModel):

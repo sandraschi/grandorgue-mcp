@@ -36,7 +36,7 @@ install-web:
 
 # Launch full webapp (backend + frontend, opens browser)
 web start:
-    .\web_sota\start.ps1
+    .\start.ps1
 
 # Generate Tauri app icons
 icons:

@@ -12,12 +12,16 @@
     "check": "biome check --write ."
   },
   "dependencies": {
+    "@coderline/alphatab": "^1.8.3",
+    "@coderline/alphatab-vite": "^1.8.3",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
+    "@playwright/test": "^1.50.0",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -26,7 +30,6 @@
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "~5.6.3",
-    "vite": "^5.4.10",
-    "@biomejs/biome": "^2.4.12"
+    "vite": "^5.4.10"
   }
 }

@@ -1,9 +1,32 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
+  "vcs": { "enabled": false },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true, "correctness": { "useExhaustiveDependencies": "off" } }
+    "rules": {
+      "recommended": true,
+      "correctness": { "useExhaustiveDependencies": "off" },
+      "style": { "noNonNullAssertion": "off" },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "useIterableCallbackReturn": "off"
+      },
+      "a11y": {
+        "useButtonType": "off",
+        "noStaticElementInteractions": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": { "rules": { "suspicious": { "noUnknownAtRules": "off" } } }
+    }
+  ],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   }
 }

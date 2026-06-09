@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Circle, Square } from "lucide-react";
+import { useState } from "react";
 
 export default function RecordPanel() {
   const [recording, setRecording] = useState(false);
@@ -13,10 +13,20 @@ export default function RecordPanel() {
           <button
             onClick={() => setRecording(!recording)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              recording ? "bg-red-900 text-red-300 hover:bg-red-800" : "bg-organ-gold/20 text-organ-gold hover:bg-organ-gold/30"
+              recording
+                ? "bg-red-900 text-red-300 hover:bg-red-800"
+                : "bg-organ-gold/20 text-organ-gold hover:bg-organ-gold/30"
             }`}
           >
-            {recording ? <><Square size={14} /> Stop</> : <><Circle size={14} /> Record</>}
+            {recording ? (
+              <>
+                <Square size={14} /> Stop
+              </>
+            ) : (
+              <>
+                <Circle size={14} /> Record
+              </>
+            )}
           </button>
           {recording && (
             <span className="flex items-center gap-2 text-red-400 text-sm">
@@ -27,8 +37,9 @@ export default function RecordPanel() {
         </div>
 
         <div className="text-xs text-zinc-600">
-          MIDI recording captures all note and stop events. GrandOrgue saves recordings as standard MIDI files (.mid).
-          Connect GrandOrgue to the MCP MIDI ports and use the built-in GO recorder for full functionality.
+          MIDI recording captures all note and stop events. GrandOrgue saves recordings as standard
+          MIDI files (.mid). Connect GrandOrgue to the MCP MIDI ports and use the built-in GO
+          recorder for full functionality.
         </div>
       </div>
     </div>

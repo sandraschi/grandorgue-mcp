@@ -1,5 +1,5 @@
+import { RotateCcw, Save } from "lucide-react";
 import { useState } from "react";
-import { Save, RotateCcw } from "lucide-react";
 import { api } from "@/api/client";
 
 const GENERALS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -18,7 +18,9 @@ export default function CombinationMemory() {
       <h1 className="text-2xl font-serif text-organ-gold">Combination Memory</h1>
 
       <section>
-        <h2 className="text-sm text-zinc-400 mb-3 flex items-center gap-2"><Save size={14} /> Generals (1-10)</h2>
+        <h2 className="text-sm text-zinc-400 mb-3 flex items-center gap-2">
+          <Save size={14} /> Generals (1-10)
+        </h2>
         <div className="flex gap-2 flex-wrap">
           {GENERALS.map((n) => (
             <button
@@ -34,7 +36,9 @@ export default function CombinationMemory() {
       </section>
 
       <section>
-        <h2 className="text-sm text-zinc-400 mb-3 flex items-center gap-2"><RotateCcw size={14} /> Divisionals</h2>
+        <h2 className="text-sm text-zinc-400 mb-3 flex items-center gap-2">
+          <RotateCcw size={14} /> Divisionals
+        </h2>
         <div className="space-y-3">
           {["Great", "Swell", "Choir", "Pedal"].map((div) => (
             <div key={div} className="flex items-center gap-2">

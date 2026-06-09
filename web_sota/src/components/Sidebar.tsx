@@ -1,5 +1,16 @@
+import {
+  Circle,
+  Disc,
+  Layers,
+  Library,
+  Monitor,
+  Music,
+  Play,
+  Settings,
+  ShoppingBag,
+  Volume2,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { Music, Library, Layers, Circle, Volume2, Monitor, ShoppingBag } from "lucide-react";
 
 const links = [
   { to: "/", icon: Monitor, label: "Dashboard" },
@@ -8,7 +19,10 @@ const links = [
   { to: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
   { to: "/combinations", icon: Layers, label: "Memory" },
   { to: "/record", icon: Circle, label: "Record" },
+  { to: "/midi-depot", icon: Disc, label: "MIDI Depot" },
+  { to: "/midi-player", icon: Play, label: "Player" },
   { to: "/mixer", icon: Volume2, label: "Mixer" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export default function Sidebar() {

@@ -8,10 +8,12 @@ build/
 .pytest_cache/
 *.bak
 *.spec
+!grandorgue-mcp-backend.spec
 *.tsbuildinfo
 .env
 web_sota/node_modules/
 web_sota/dist/
+web_sota/test-results/
 native/target/
 native/binaries/
 native/gen/

@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Volume2 } from "lucide-react";
+import { useState } from "react";
 import { api } from "@/api/client";
 
 const CHANNELS = [
@@ -22,13 +22,18 @@ export default function AudioMixer() {
       <h1 className="text-2xl font-serif text-organ-gold">Audio Mixer</h1>
 
       <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
-        <h2 className="text-sm text-zinc-400 flex items-center gap-2"><Volume2 size={14} /> Expression Pedals / Enclosures</h2>
+        <h2 className="text-sm text-zinc-400 flex items-center gap-2">
+          <Volume2 size={14} /> Expression Pedals / Enclosures
+        </h2>
 
         {CHANNELS.map((ch) => (
           <div key={ch.cc} className="flex items-center gap-3">
             <span className="text-xs text-zinc-500 w-16">{ch.name}</span>
             <input
-              type="range" min={0} max={100} value={levels[ch.cc] || 100}
+              type="range"
+              min={0}
+              max={100}
+              value={levels[ch.cc] || 100}
               onChange={(e) => setLevel(ch.cc, +e.target.value)}
               className="flex-1"
             />
@@ -40,7 +45,10 @@ export default function AudioMixer() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-zinc-300 font-medium w-16">Master</span>
             <input
-              type="range" min={0} max={100} value={master}
+              type="range"
+              min={0}
+              max={100}
+              value={master}
               onChange={(e) => setMaster(+e.target.value)}
               className="flex-1"
             />

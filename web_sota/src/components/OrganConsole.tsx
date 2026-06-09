@@ -38,7 +38,9 @@ export default function OrganConsole() {
 
   const setAllStops = (state: boolean) => {
     const next: Record<number, boolean> = {};
-    STOPS.forEach((s) => (next[s.cc] = state));
+    STOPS.forEach((s) => {
+      next[s.cc] = state;
+    });
     setStops(next);
     STOPS.forEach((s) => api.setStop(s.cc, state));
   };
@@ -48,16 +50,38 @@ export default function OrganConsole() {
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-serif text-organ-gold">Console</h1>
         <div className="flex gap-2">
-          <button onClick={() => setAllStops(true)} className="px-3 py-1 text-xs bg-green-900 text-green-300 rounded">Tutti</button>
-          <button onClick={() => setAllStops(false)} className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded">Clear</button>
-          <button onClick={() => api.panic()} className="px-3 py-1 text-xs bg-red-900 text-red-300 rounded">Panic</button>
+          <button
+            onClick={() => setAllStops(true)}
+            className="px-3 py-1 text-xs bg-green-900 text-green-300 rounded"
+          >
+            Tutti
+          </button>
+          <button
+            onClick={() => setAllStops(false)}
+            className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded"
+          >
+            Clear
+          </button>
+          <button
+            onClick={() => api.panic()}
+            className="px-3 py-1 text-xs bg-red-900 text-red-300 rounded"
+          >
+            Panic
+          </button>
         </div>
         <div className="flex-1" />
         <div className="flex items-center gap-2">
           <span className="text-xs text-zinc-500">Crescendo</span>
           <input
-            type="range" min={0} max={127} value={crescendo}
-            onChange={(e) => { const v = +e.target.value; setCrescendo(v); api.setCrescendo(v); }}
+            type="range"
+            min={0}
+            max={127}
+            value={crescendo}
+            onChange={(e) => {
+              const v = +e.target.value;
+              setCrescendo(v);
+              api.setCrescendo(v);
+            }}
             className="w-32"
           />
           <span className="text-xs text-zinc-500 w-8">{crescendo}</span>

@@ -7,18 +7,25 @@ Port: 11010 (backend) / 11011 (frontend via Vite proxy).
 
 from __future__ import annotations
 
+import asyncio
+import base64
+import io
 import os
+import zipfile
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastmcp import FastMCP
 
 from grandorgue_mcp.auto_load import ensure_organ_loaded, load_last_organ, save_last_organ
 from grandorgue_mcp.go_process import go_process
 from grandorgue_mcp.midi_bridge import midi_bridge
+from grandorgue_mcp.models import AppSettings
 from grandorgue_mcp.organ_manager import FREE_SAMPLE_SET_SOURCES, organ_manager
+from grandorgue_mcp.settings_store import GO_CONFIG_DIR, load_settings, save_settings, settings_payload
 
 PORT = int(os.getenv("PORT", "11010"))
 HOST = os.getenv("HOST", "127.0.0.1")
@@ -27,6 +34,17 @@ mcp = FastMCP("grandorgue-mcp")
 app = FastAPI(title="GrandOrgue MCP Server", version="0.1.0")
 
 _ws_clients: list[WebSocket] = []
+
+
+def apply_runtime_settings() -> None:
+    settings = load_settings()
+    settings.config_dir = str(GO_CONFIG_DIR)
+    midi_bridge.configure(settings.midi_input_port, settings.midi_output_port)
+    go_process.set_exe_path(settings.go_exe_path)
+    go_process.refresh_exe_path()
+
+
+apply_runtime_settings()
 
 # ── WebSocket broadcast ──────────────────────────────────────────
 
@@ -146,7 +164,6 @@ async def go_play_note(
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected. Run go_midi_connect first."}
     midi_bridge.play_note(channel, midi_note, velocity)
-    import asyncio
     await asyncio.sleep(duration_ms / 1000)
     midi_bridge.release_note(channel, midi_note)
     return {"success": True, "note": midi_note, "velocity": velocity, "channel": channel}
@@ -409,6 +426,106 @@ async def go_bach_catalog(bwv: int | None = None) -> dict[str, Any]:
     return {"success": True, "works": catalog, "total": len(catalog)}
 
 
+# ── MIDI File Depot ───────────────────────────────────────────────
+
+_MIDI_DEPOT = Path(__file__).resolve().parent.parent.parent / "midi_depot"
+_MIDI_DEPOT.mkdir(exist_ok=True)
+
+
+@mcp.tool()
+async def midi_depot_list() -> dict[str, Any]:
+    """List all MIDI files in the depot.
+
+    ## Return Format
+    {"success": bool, "files": [{"name": str, "size_bytes": int, "modified": str}]}
+    """
+    files = []
+    for p in sorted(_MIDI_DEPOT.iterdir()):
+        if p.suffix.lower() in (".mid", ".midi"):
+            stat = p.stat()
+            files.append({"name": p.name, "size_bytes": stat.st_size, "modified": stat.st_mtime})
+    return {"success": True, "files": files}
+
+
+@mcp.tool()
+async def midi_depot_upload(name: str, data_base64: str) -> dict[str, Any]:
+    """Upload a MIDI file to the depot. Provide file name and base64-encoded content.
+
+    ## Return Format
+    {"success": bool, "path": str}
+    """
+    if not name.lower().endswith((".mid", ".midi")):
+        name += ".mid"
+    path = _MIDI_DEPOT / name
+    path.write_bytes(base64.b64decode(data_base64))
+    return {"success": True, "path": str(path)}
+
+
+@mcp.tool()
+async def midi_depot_download(name: str) -> dict[str, Any]:
+    """Download a MIDI file from the depot as base64.
+
+    ## Return Format
+    {"success": bool, "name": str, "data_base64": str, "size_bytes": int}
+    """
+    path = _MIDI_DEPOT / name
+    if not path.exists():
+        return {"success": False, "message": f"File not found: {name}"}
+    data = base64.b64encode(path.read_bytes()).decode()
+    return {"success": True, "name": path.name, "data_base64": data, "size_bytes": path.stat().st_size}
+
+
+@mcp.tool()
+async def midi_depot_delete(name: str) -> dict[str, Any]:
+    """Delete a MIDI file from the depot.
+
+    ## Return Format
+    {"success": bool, "message": str}
+    """
+    path = _MIDI_DEPOT / name
+    if not path.exists():
+        return {"success": False, "message": f"File not found: {name}"}
+    path.unlink()
+    return {"success": True, "message": f"Deleted {name}"}
+
+
+_BACH_ZIP_URL = "http://www.bachcentral.com/bach.zip"
+
+
+@mcp.tool()
+async def midi_depot_download_bach() -> dict[str, Any]:
+    """Download the complete J.S. Bach MIDI bundle (bachcentral.com) into the depot.
+
+    Downloads bach.zip (~665 KB), extracts all .mid and .midi files into midi_depot/.
+
+    ## Return Format
+    {"success": bool, "count": int, "files": [str], "message": str}
+    """
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=60) as client:
+            r = await client.get(_BACH_ZIP_URL)
+            r.raise_for_status()
+    except Exception as e:
+        return {"success": False, "count": 0, "files": [], "message": f"Download failed: {e}"}
+
+    extracted = []
+    with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+        for name in zf.namelist():
+            if name.lower().endswith((".mid", ".midi")):
+                stem = Path(name).name
+                dest = _MIDI_DEPOT / stem
+                if not dest.exists():
+                    dest.write_bytes(zf.read(name))
+                extracted.append(stem)
+
+    return {
+        "success": True,
+        "count": len(extracted),
+        "files": sorted(extracted),
+        "message": f"Extracted {len(extracted)} MIDI files from Bach bundle",
+    }
+
+
 # ── FastAPI REST Endpoints ───────────────────────────────────────
 
 @app.get("/health")
@@ -428,6 +545,66 @@ async def api_status() -> JSONResponse:
     })
 
 
+@app.get("/api/settings")
+async def api_get_settings() -> JSONResponse:
+    proc = go_process.discover()
+    return JSONResponse(
+        content=settings_payload(
+            {
+                "go_version": proc.version,
+                "midi_connected": midi_bridge.connected,
+            }
+        )
+    )
+
+
+@app.put("/api/settings")
+async def api_update_settings(body: dict[str, Any]) -> JSONResponse:
+    current = load_settings()
+    if midi_bridge.connected:
+        next_input = body.get("midi_input_port", current.midi_input_port)
+        next_output = body.get("midi_output_port", current.midi_output_port)
+        if next_input != current.midi_input_port or next_output != current.midi_output_port:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Disconnect MIDI before changing port names"},
+            )
+
+    go_exe_path = str(body.get("go_exe_path", current.go_exe_path)).strip()
+    midi_input_port = str(body.get("midi_input_port", current.midi_input_port)).strip()
+    midi_output_port = str(body.get("midi_output_port", current.midi_output_port)).strip()
+
+    if not go_exe_path:
+        return JSONResponse(status_code=400, content={"success": False, "message": "GrandOrgue executable path is required"})
+    if not Path(go_exe_path).exists():
+        return JSONResponse(status_code=400, content={"success": False, "message": f"Executable not found: {go_exe_path}"})
+    if not midi_input_port or not midi_output_port:
+        return JSONResponse(status_code=400, content={"success": False, "message": "MIDI port names are required"})
+
+    updated = AppSettings(
+        go_exe_path=go_exe_path,
+        midi_input_port=midi_input_port,
+        midi_output_port=midi_output_port,
+        config_dir=str(GO_CONFIG_DIR),
+    )
+    save_settings(updated)
+    go_process.set_exe_path(go_exe_path)
+    go_process.refresh_exe_path()
+    midi_bridge.configure(midi_input_port, midi_output_port)
+    proc = go_process.discover()
+    return JSONResponse(
+        content={
+            "success": True,
+            **settings_payload(
+                {
+                    "go_version": proc.version,
+                    "midi_connected": midi_bridge.connected,
+                }
+            ),
+        }
+    )
+
+
 @app.get("/api/midi/ports")
 async def api_midi_ports() -> JSONResponse:
     status = midi_bridge.list_ports()
@@ -437,7 +614,12 @@ async def api_midi_ports() -> JSONResponse:
 @app.post("/api/midi/connect")
 async def api_midi_connect() -> JSONResponse:
     ok = midi_bridge.connect()
-    return JSONResponse(content={"success": ok, "ports": {"input": midi_bridge._go_input_name, "output": midi_bridge._go_output_name}})
+    return JSONResponse(
+        content={
+            "success": ok,
+            "ports": {"input": midi_bridge.go_input_name, "output": midi_bridge.go_output_name},
+        }
+    )
 
 
 @app.post("/api/midi/disconnect")
@@ -451,12 +633,22 @@ async def api_play_note(body: dict[str, Any]) -> JSONResponse:
     note = body.get("note", 60)
     velocity = body.get("velocity", 64)
     channel = body.get("channel", 0)
-    duration = body.get("duration_ms", 500)
+    duration = body.get("duration_ms")
     if not midi_bridge.connected:
         return JSONResponse(status_code=400, content={"success": False, "message": "MIDI not connected"})
     midi_bridge.play_note(channel, note, velocity)
-    import asyncio
-    await asyncio.sleep(duration / 1000)
+    if duration is not None:
+        await asyncio.sleep(duration / 1000)
+        midi_bridge.release_note(channel, note)
+    return JSONResponse(content={"success": True})
+
+
+@app.post("/api/note/off")
+async def api_release_note(body: dict[str, Any]) -> JSONResponse:
+    note = body.get("note", 60)
+    channel = body.get("channel", 0)
+    if not midi_bridge.connected:
+        return JSONResponse(status_code=400, content={"success": False, "message": "MIDI not connected"})
     midi_bridge.release_note(channel, note)
     return JSONResponse(content={"success": True})
 
@@ -517,16 +709,31 @@ async def api_go_status() -> JSONResponse:
 async def api_go_start() -> JSONResponse:
     try:
         info = go_process.start()
+        if not info.running:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "success": False,
+                    "message": info.error or "GrandOrgue exited immediately after launch",
+                    "pid": info.pid,
+                },
+            )
         return JSONResponse(content={"success": True, "pid": info.pid})
     except FileNotFoundError as e:
         return JSONResponse(status_code=404, content={"success": False, "message": str(e)})
+    except RuntimeError as e:
+        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
 
 
 @app.post("/api/go/stop")
 async def api_go_stop() -> JSONResponse:
     ok = go_process.stop()
     midi_bridge.disconnect()
-    return JSONResponse(content={"success": ok})
+    if not ok:
+        proc = go_process.discover()
+        message = proc.error or "GrandOrgue is not running"
+        return JSONResponse(status_code=409, content={"success": False, "message": message})
+    return JSONResponse(content={"success": True})
 
 
 @app.get("/api/organs")
@@ -597,6 +804,56 @@ async def api_bach_catalog(bwv: int | None = None) -> JSONResponse:
     if bwv:
         catalog = [w for w in catalog if w["bwv"] == bwv]
     return JSONResponse(content={"success": True, "works": catalog, "total": len(catalog)})
+
+
+@app.get("/api/midi-depot")
+async def api_midi_depot_list() -> JSONResponse:
+    files = []
+    for p in sorted(_MIDI_DEPOT.iterdir()):
+        if p.suffix.lower() in (".mid", ".midi"):
+            stat = p.stat()
+            files.append({"name": p.name, "size_bytes": stat.st_size, "modified": stat.st_mtime})
+    return JSONResponse(content={"success": True, "files": files})
+
+
+@app.post("/api/midi-depot/upload")
+async def api_midi_depot_upload(body: dict[str, Any]) -> JSONResponse:
+    name = body.get("name", "")
+    data = body.get("data_base64", "")
+    if not name or not data:
+        return JSONResponse(status_code=400, content={"success": False, "message": "name and data_base64 required"})
+    result = await midi_depot_upload(name, data)
+    return JSONResponse(content=result)
+
+
+@app.get("/api/midi-depot/{name}/download")
+async def api_midi_depot_download(name: str) -> JSONResponse:
+    result = await midi_depot_download(name)
+    if not result["success"]:
+        return JSONResponse(status_code=404, content=result)
+    return JSONResponse(content=result)
+
+
+@app.delete("/api/midi-depot/{name}")
+async def api_midi_depot_delete(name: str) -> JSONResponse:
+    result = await midi_depot_delete(name)
+    status = 404 if not result["success"] else 200
+    return JSONResponse(status_code=status, content=result)
+
+
+@app.get("/api/midi-depot/{name}/raw")
+async def api_midi_depot_raw(name: str) -> Response:
+    path = _MIDI_DEPOT / name
+    if not path.exists():
+        return JSONResponse(status_code=404, content={"success": False, "message": f"File not found: {name}"})
+    return Response(content=path.read_bytes(), media_type="audio/midi", headers={"Content-Disposition": f'inline; filename="{name}"'})
+
+
+@app.post("/api/midi-depot/batch/bach")
+async def api_midi_depot_bach() -> JSONResponse:
+    result = await midi_depot_download_bach()
+    status = 200 if result["success"] else 502
+    return JSONResponse(status_code=status, content=result)
 
 
 # ── WebSocket ─────────────────────────────────────────────────────

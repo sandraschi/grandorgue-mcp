@@ -1,13 +1,16 @@
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
+import AudioMixer from "./components/AudioMixer";
+import CombinationMemory from "./components/CombinationMemory";
+import Dashboard from "./components/Dashboard";
+import Marketplace from "./components/Marketplace";
+import MidiDepot from "./components/MidiDepot";
+import MidiPlayer from "./components/MidiPlayer";
+import OrganBrowser from "./components/OrganBrowser";
+import OrganConsole from "./components/OrganConsole";
+import RecordPanel from "./components/RecordPanel";
+import Settings from "./components/Settings";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
-import Dashboard from "./components/Dashboard";
-import OrganConsole from "./components/OrganConsole";
-import OrganBrowser from "./components/OrganBrowser";
-import CombinationMemory from "./components/CombinationMemory";
-import RecordPanel from "./components/RecordPanel";
-import AudioMixer from "./components/AudioMixer";
-import Marketplace from "./components/Marketplace";
 
 export default function App() {
   return (
@@ -23,7 +26,10 @@ export default function App() {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/combinations" element={<CombinationMemory />} />
             <Route path="/record" element={<RecordPanel />} />
+            <Route path="/midi-depot" element={<MidiDepot />} />
+            <Route path="/midi-player" element={<MidiPlayer />} />
             <Route path="/mixer" element={<AudioMixer />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
       </div>

@@ -4,10 +4,12 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: { exclude: ["@coderline/alphatab"] },
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
   server: {
+    allowedHosts: ['goliath'],
     port: 11011,
     strictPort: true,
     host: "127.0.0.1",
