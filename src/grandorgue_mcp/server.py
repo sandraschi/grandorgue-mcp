@@ -1294,7 +1294,7 @@ async def api_diagnostics() -> dict[str, Any]:
     return {
         "status": "ok",
         "server": "grandorgue-mcp",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "tool_count": len(_tool_names),
         "tools": [{"name": n} for n in sorted(_tool_names)],
         "system": {"windows": True},

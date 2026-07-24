@@ -1,6 +1,6 @@
 {
   "productName": "GrandOrgue MCP",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "identifier": "ai.fleet.grandorgue-mcp",
   "build": {
     "frontendDist": "../web_sota/dist",

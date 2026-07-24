@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.2",
   "name": "grandorgue-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management, Bach repertoire",
   "author": { "name": "sandraschi" },
   "server": {

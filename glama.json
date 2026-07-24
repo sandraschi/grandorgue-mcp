@@ -3,7 +3,7 @@
   "id": "grandorgue-mcp",
   "name": "GrandOrgue MCP",
   "description": "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management, modern web console",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "server": {
     "type": "python",
     "runtime": "uv",
