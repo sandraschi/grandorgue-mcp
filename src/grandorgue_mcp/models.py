@@ -72,6 +72,7 @@ class AppSettings(BaseModel):
     midi_input_port: str = "GrandOrgue MCP Out"
     midi_output_port: str = "GrandOrgue MCP In"
     config_dir: str = ""
+    midi_recordings_dir: str = ""  # empty = auto-detect (see settings_store.resolve_midi_recordings_dir)
 
 
 class SampleSetEntry(BaseModel):

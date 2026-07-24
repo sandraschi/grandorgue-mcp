@@ -18,7 +18,7 @@ export default function ManualKeyboard({ firstNote, noteCount, channel, isPedal 
     (midiNote: number) => {
       if (activeRef.current.has(midiNote)) return;
       activeRef.current.add(midiNote);
-      api.playNote(midiNote, 80, channel, 0);
+      api.playNote(midiNote, 80, channel);
     },
     [channel],
   );
@@ -40,12 +40,7 @@ export default function ManualKeyboard({ firstNote, noteCount, channel, isPedal 
             <div
               key={midiNote}
               className="pedal-key flex-1 min-w-[24px] h-14 flex items-end justify-center pb-1"
-              onMouseDown={() => {
-                playNote(midiNote); /* API note on */
-                api.midiConnect().then(() => {
-                  api.setStop(midiNote, true);
-                });
-              }}
+              onMouseDown={() => playNote(midiNote)}
               onMouseUp={() => releaseNote(midiNote)}
               onMouseLeave={() => releaseNote(midiNote)}
             >

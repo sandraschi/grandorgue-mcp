@@ -11,6 +11,7 @@ import RecordPanel from "./components/RecordPanel";
 import Settings from "./components/Settings";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+import FloatingChat from "./components/FloatingChat";
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <FloatingChat />
     </div>
   );
 }

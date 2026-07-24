@@ -1,0 +1,62 @@
+{
+  "manifest_version": "0.2",
+  "name": "grandorgue-mcp",
+  "version": "0.2.0",
+  "description": "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management, Bach repertoire",
+  "author": { "name": "sandraschi" },
+  "server": {
+    "type": "python",
+    "entry_point": "run_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${PWD}", "run_server.py"],
+      "env": {
+        "MCP_TRANSPORT": "stdio",
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1",
+        "GO_EXE_PATH": "${user_config.go_exe_path}"
+      }
+    }
+  },
+  "user_config": {
+    "go_exe_path": {
+      "type": "string",
+      "title": "GrandOrgue executable",
+      "description": "Full path to GrandOrgue.exe. Leave empty to auto-detect common install locations.",
+      "required": false,
+      "default": ""
+    }
+  },
+  "tools": [
+    { "name": "go_status", "description": "GrandOrgue process, MIDI, and organ status" },
+    { "name": "go_start", "description": "Launch GrandOrgue, optionally loading an .organ file" },
+    { "name": "go_stop", "description": "Terminate the GrandOrgue process" },
+    { "name": "go_midi_connect", "description": "Open the MIDI bridge ports to GrandOrgue" },
+    { "name": "go_midi_disconnect", "description": "Close the MIDI bridge" },
+    { "name": "go_list_midi_ports", "description": "List system MIDI input/output ports" },
+    { "name": "go_play_note", "description": "Play a single MIDI note through the organ" },
+    { "name": "go_play_chord", "description": "Play a chord through the organ" },
+    { "name": "go_set_stop", "description": "Toggle a drawstop via MIDI CC" },
+    { "name": "go_set_crescendo", "description": "Set crescendo pedal position (0-127)" },
+    { "name": "go_set_enclosure", "description": "Set swell enclosure level via MIDI CC" },
+    { "name": "go_combination", "description": "Trigger a general piston via Program Change" },
+    { "name": "go_panic", "description": "All-notes-off on all channels" },
+    { "name": "go_load_organ", "description": "Load an organ by name or path (pywinauto-assisted)" },
+    { "name": "go_auto_load", "description": "Reload the last-used organ" },
+    { "name": "go_unload_organ", "description": "Unload the current organ from the registry" },
+    { "name": "go_list_organs", "description": "List installed sample sets and free catalogs" },
+    { "name": "go_send_sysex", "description": "Send raw SYSEX hex data" },
+    { "name": "go_marketplace_search", "description": "Search the free sample set catalog" },
+    { "name": "go_marketplace_download", "description": "Get the download URL for a sample set" },
+    { "name": "go_bach_catalog", "description": "Browse the J.S. Bach organ works catalog by BWV" },
+    { "name": "go_play_midi_file", "description": "Play a depot MIDI file via GO's built-in player (keystroke injection)" },
+    { "name": "go_play_midi_file_ui", "description": "Play a depot MIDI file via pywinauto UI automation" },
+    { "name": "go_midi_playback_status", "description": "Whether bridge MIDI playback is active" },
+    { "name": "go_stop_playback", "description": "Stop MIDI playback and cut all notes" },
+    { "name": "midi_depot_list", "description": "List MIDI files in the depot" },
+    { "name": "midi_depot_upload", "description": "Upload a MIDI file (base64) to the depot" },
+    { "name": "midi_depot_download", "description": "Download a depot MIDI file as base64" },
+    { "name": "midi_depot_delete", "description": "Delete a depot MIDI file" },
+    { "name": "midi_depot_download_bach", "description": "Fetch the full Bach MIDI bundle into the depot" }
+  ]
+}

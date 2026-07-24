@@ -1,4 +1,4 @@
-﻿param(
+param(
     [switch]$Headless,
     [switch]$BackendOnly,
     [switch]$NoBrowser
@@ -7,6 +7,13 @@
 $ErrorActionPreference = "Stop"
 $ScriptRoot = Split-Path -Parent $PSCommandPath
 $BackendPort = 11010
+$FleetStartPath = Join-Path $ScriptRoot "scripts\FleetStartMode.ps1"
+if (-not (Test-Path -LiteralPath $FleetStartPath)) {
+    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
+    exit 1
+}
+. $FleetStartPath
+
 $FrontendPort = 11011
 
 $__PortHelpers = Join-Path $ScriptRoot "scripts\PortHelpers.ps1"
@@ -22,6 +29,7 @@ Get-NetTCPConnection -LocalPort $FrontendPort -ErrorAction SilentlyContinue |
 $BackendJob = Start-Job -Name "grandorgue-backend" -ScriptBlock {
     param($Root)
     Set-Location $Root
+    $env:MCP_TRANSPORT = "http"
     uv run grandorgue-mcp
 } -ArgumentList $ScriptRoot
 

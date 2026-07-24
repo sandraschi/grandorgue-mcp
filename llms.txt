@@ -1,0 +1,19 @@
+# GrandOrgue MCP
+
+> Modern pipe organ console — MIDI bridge, organ control, sample set management for GrandOrgue.
+
+- [llms-full.txt](llms-full.txt) — Full documentation (tools, API, config, architecture)
+- [README.md](README.md) — Overview and quick start
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — System architecture
+- [docs/MCP_TOOLS.md](docs/MCP_TOOLS.md) — Tool reference
+- [docs/MIDI_SETUP.md](docs/MIDI_SETUP.md) — MIDI configuration
+- [docs/SAMPLE_SETS.md](docs/SAMPLE_SETS.md) — Sample set guide
+
+## Quick start
+```
+just install        # Backend deps
+just install-web    # Frontend deps
+just web            # Launch everything
+```
+
+Ports: Backend :11010, Frontend :11011

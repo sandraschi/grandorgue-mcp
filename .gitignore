@@ -14,6 +14,9 @@ build/
 web_sota/node_modules/
 web_sota/dist/
 web_sota/test-results/
+web_sota/playwright-report/
 native/target/
 native/binaries/
 native/gen/
+native/resources/
+reports/

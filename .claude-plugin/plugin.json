@@ -1,0 +1,6 @@
+{
+  "name": "grandorgue-mcp",
+  "version": "0.2.0",
+  "description": "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management",
+  "hooks": "../hooks/hooks.json"
+}

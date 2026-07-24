@@ -1,6 +1,6 @@
 import { Check, RefreshCw, Save, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { api, ApiError, type AppSettings } from "@/api/client";
+import { ApiError, type AppSettings, api } from "@/api/client";
 
 export default function Settings() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -81,8 +81,8 @@ export default function Settings() {
       <section className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4">
         <h2 className="text-sm font-medium text-zinc-300">GrandOrgue Executable</h2>
         <p className="text-xs text-zinc-500">
-          Path to <code className="text-zinc-400">GrandOrgue.exe</code>. The backend uses this when you click Start
-          GrandOrgue on the Dashboard.
+          Path to <code className="text-zinc-400">GrandOrgue.exe</code>. The backend uses this when
+          you click Start GrandOrgue on the Dashboard.
         </p>
         <input
           type="text"
@@ -123,7 +123,8 @@ export default function Settings() {
       <section className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4">
         <h2 className="text-sm font-medium text-zinc-300">MIDI Bridge Ports</h2>
         <p className="text-xs text-zinc-500">
-          Virtual port names created when you click Connect MIDI. Configure the same names inside GrandOrgue.
+          Virtual port names created when you click Connect MIDI. Configure the same names inside
+          GrandOrgue.
         </p>
         <label className="block space-y-1">
           <span className="text-xs text-zinc-500">MCP output port (GrandOrgue MIDI Input)</span>
@@ -152,7 +153,9 @@ export default function Settings() {
           />
         </label>
         {settings?.midi_connected && (
-          <p className="text-xs text-amber-300">Disconnect MIDI on the Dashboard before changing port names.</p>
+          <p className="text-xs text-amber-300">
+            Disconnect MIDI on the Dashboard before changing port names.
+          </p>
         )}
       </section>
 
@@ -160,13 +163,19 @@ export default function Settings() {
         <h2 className="text-sm font-medium text-zinc-300">Configure GrandOrgue</h2>
         <ol className="list-decimal list-inside space-y-2 text-sm text-zinc-400">
           <li>Save settings above, then start the backend and open this webapp.</li>
-          <li>On the Dashboard, click <strong className="text-zinc-300">Start GrandOrgue</strong>.</li>
-          <li>On the Dashboard, click <strong className="text-zinc-300">Connect MIDI</strong>.</li>
           <li>
-            In GrandOrgue, open <strong className="text-zinc-300">File → Settings → Audio/MIDI Settings</strong>.
+            On the Dashboard, click <strong className="text-zinc-300">Start GrandOrgue</strong>.
           </li>
           <li>
-            On the MIDI Devices tab, set <strong className="text-zinc-300">MIDI Input Device</strong> to{" "}
+            On the Dashboard, click <strong className="text-zinc-300">Connect MIDI</strong>.
+          </li>
+          <li>
+            In GrandOrgue, open{" "}
+            <strong className="text-zinc-300">File → Settings → Audio/MIDI Settings</strong>.
+          </li>
+          <li>
+            On the MIDI Devices tab, set{" "}
+            <strong className="text-zinc-300">MIDI Input Device</strong> to{" "}
             <code className="text-organ-gold">{midiInputPort || "GrandOrgue MCP Out"}</code>.
           </li>
           <li>

@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import io
 import os
 import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 from grandorgue_mcp.models import GrandOrgueProcessInfo
 from grandorgue_mcp.settings_store import grandorgue_config_path, load_settings, resolve_go_exe
@@ -22,9 +24,7 @@ def _creationflags() -> int:
 
 def _powershell_exe() -> str:
     system_root = os.environ.get("SystemRoot", r"C:\Windows")
-    return str(
-        os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
-    )
+    return str(os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"))
 
 
 def _tasklist_exe() -> str:
@@ -38,6 +38,7 @@ class GoProcessManager:
         self._exe_path: str | None = None
         self._last_error: str | None = None
         self._spawned = False
+        self._version_cache: tuple[str, float, str | None] | None = None
         self.refresh_exe_path()
 
     def refresh_exe_path(self) -> str | None:
@@ -97,10 +98,22 @@ class GoProcessManager:
         return info
 
     def _detect_version(self) -> str | None:
-        """Read version from the executable metadata — GO has no --version flag."""
+        """Read version from the executable metadata — GO has no --version flag.
+
+        Result is cached per (exe path, mtime): the frontend polls /api/status
+        every few seconds and spawning PowerShell on every poll stalls the
+        event loop and burns CPU for a value that never changes at runtime.
+        """
         exe = self.refresh_exe_path()
         if not exe:
             return None
+        try:
+            mtime = os.path.getmtime(exe)
+        except OSError:
+            mtime = 0.0
+        if self._version_cache and self._version_cache[0] == exe and self._version_cache[1] == mtime:
+            return self._version_cache[2]
+        version_str: str | None = None
         if sys.platform == "win32":
             try:
                 result = subprocess.run(
@@ -117,20 +130,56 @@ class GoProcessManager:
                 )
                 version = result.stdout.strip()
                 if version:
-                    return f"GrandOrgue {version}"
+                    version_str = f"GrandOrgue {version}"
             except Exception:
                 pass
-        return None
+        self._version_cache = (exe, mtime, version_str)
+        return version_str
 
-    def _launch(self, exe: str) -> subprocess.Popen:
+    def _launch(self, exe: str, organ_path: str | None = None) -> subprocess.Popen:
+        cmd = [exe]
+        if organ_path:
+            cmd.append(organ_path)
         return subprocess.Popen(
-            [exe],
+            cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             creationflags=_creationflags(),
         )
 
-    def start(self) -> GrandOrgueProcessInfo:
+    def _ensure_midi_config(self) -> None:
+        """Add loopMIDI port to GrandOrgue's config so it listens for MIDI input."""
+        config_path = Path(grandorgue_config_path())
+        if not config_path.exists():
+            return
+        try:
+            raw = config_path.read_bytes()
+            data = gzip.decompress(raw).decode("utf-8")
+            if "GrandOrgue MCP In" in data:
+                return  # already configured
+
+            # Find and update the [MIDIIn] section. GO configs may use CRLF or
+            # LF line endings — match both.
+            replaced = False
+            for eol in ("\r\n", "\n"):
+                old = f"[MIDIIn]{eol}Count=0"
+                new = (
+                    f"[MIDIIn]{eol}Count=1{eol}Device001Name=GrandOrgue MCP In 0{eol}"
+                    f"Device001PortName=GrandOrgue MCP In{eol}Device001RegEx={eol}DeviceInstrument001="
+                )
+                if old in data:
+                    data = data.replace(old, new)
+                    replaced = True
+                    break
+            if replaced:
+                buf = io.BytesIO()
+                with gzip.GzipFile(fileobj=buf, mode="wb") as f:
+                    f.write(data.encode("utf-8"))
+                config_path.write_bytes(buf.getvalue())
+        except Exception:
+            pass  # non-fatal — GO will still launch, just without MIDI input
+
+    def start(self, organ_path: str | None = None) -> GrandOrgueProcessInfo:
         existing_pid = self._resolve_running_pid()
         if existing_pid is not None:
             self._last_error = None
@@ -140,13 +189,13 @@ class GoProcessManager:
         if not exe:
             settings = load_settings()
             raise FileNotFoundError(
-                f"GrandOrgue executable not found at '{settings.go_exe_path}'. "
-                "Open Settings and set the correct path."
+                f"GrandOrgue executable not found at '{settings.go_exe_path}'. Open Settings and set the correct path."
             )
 
         self._last_error = None
         self._spawned = True
-        self._process = self._launch(exe)
+        self._ensure_midi_config()
+        self._process = self._launch(exe, organ_path)
         time.sleep(2)
 
         if self._process.poll() is not None:

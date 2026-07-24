@@ -12,6 +12,8 @@ from grandorgue_mcp.models import AppSettings
 
 GO_CONFIG_DIR = Path(os.getenv("GO_CONFIG_DIR", str(Path.home() / "AppData" / "Roaming" / "GrandOrgue-mcp")))
 SETTINGS_FILE = GO_CONFIG_DIR / "settings.json"
+
+
 def grandorgue_config_path() -> Path:
     """Where GrandOrgue stores MIDI/audio settings."""
     if os.name == "nt":
@@ -20,17 +22,62 @@ def grandorgue_config_path() -> Path:
         return Path.home() / "Library" / "Preferences" / "GrandOrgueConfig"
     return Path.home() / "GrandOrgueConfig"
 
+
 DEFAULT_GO_EXE_PATH = r"C:\Program Files\GrandOrgue\bin\GrandOrgue.exe"
 
 DEFAULT_GO_PATHS = [
-    DEFAULT_GO_EXE_PATH,
-    r"C:\Program Files\GrandOrgue\GrandOrgue.exe",
+    r"C:\Program Files\GrandOrgue\bin\GrandOrgue.exe",
     r"C:\Program Files (x86)\GrandOrgue\GrandOrgue.exe",
     r"C:\Program Files (x86)\GrandOrgue\bin\GrandOrgue.exe",
     "/usr/bin/GrandOrgue",
     "/usr/local/bin/GrandOrgue",
     "/Applications/GrandOrgue.app/Contents/MacOS/GrandOrgue",
 ]
+
+
+def resolve_midi_depot_dir() -> Path:
+    """Stable location for the MIDI depot.
+
+    Priority:
+    1. MIDI_DEPOT_DIR env var
+    2. repo-root midi_depot/ when running from a source checkout
+    3. GO_CONFIG_DIR/midi_depot (packaged installs: wheel, PyInstaller, mcpb)
+    """
+    env = os.getenv("MIDI_DEPOT_DIR")
+    if env:
+        depot = Path(env)
+    else:
+        repo_depot = Path(__file__).resolve().parents[2] / "midi_depot"
+        depot = repo_depot if repo_depot.is_dir() else GO_CONFIG_DIR / "midi_depot"
+    depot.mkdir(parents=True, exist_ok=True)
+    return depot
+
+
+def resolve_midi_recordings_dir(settings: AppSettings | None = None) -> Path:
+    """GrandOrgue's 'MIDI recordings' directory (where GO's file dialog opens).
+
+    Priority: GO_MIDI_RECORDINGS_DIR env > settings.midi_recordings_dir >
+    first existing well-known candidate (OneDrive localized variants included) >
+    plain Documents fallback (created on demand).
+    """
+    env = os.getenv("GO_MIDI_RECORDINGS_DIR")
+    if env:
+        return Path(env)
+    settings = settings or load_settings()
+    if settings.midi_recordings_dir:
+        return Path(settings.midi_recordings_dir)
+    home = Path.home()
+    candidates = [
+        home / "OneDrive" / "Dokumente" / "GrandOrgue" / "MIDI recordings",
+        home / "OneDrive" / "Documents" / "GrandOrgue" / "MIDI recordings",
+        home / "Documents" / "GrandOrgue" / "MIDI recordings",
+    ]
+    for c in candidates:
+        if c.is_dir():
+            return c
+    fallback = candidates[-1]
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback
 
 
 def _defaults() -> AppSettings:
@@ -40,6 +87,7 @@ def _defaults() -> AppSettings:
         midi_input_port="GrandOrgue MCP Out",
         midi_output_port="GrandOrgue MCP In",
         config_dir=str(GO_CONFIG_DIR),
+        midi_recordings_dir="",
     )
 
 
@@ -82,6 +130,8 @@ def settings_payload(extra: dict[str, Any] | None = None) -> dict[str, Any]:
         "resolved_go_exe_path": exe,
         "default_go_paths": DEFAULT_GO_PATHS,
         "go_config_path": str(grandorgue_config_path()),
+        "resolved_midi_recordings_dir": str(resolve_midi_recordings_dir(settings)),
+        "midi_depot_dir": str(resolve_midi_depot_dir()),
     }
     if extra:
         payload.update(extra)

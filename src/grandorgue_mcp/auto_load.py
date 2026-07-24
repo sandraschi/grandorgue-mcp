@@ -17,7 +17,9 @@ from typing import Any
 import httpx
 
 PYWINAUTO_API = os.getenv("PYWINAUTO_MCP_URL", "http://127.0.0.1:10788")
-STATE_FILE = Path(os.getenv("GO_CONFIG_DIR", str(Path.home() / "AppData" / "Roaming" / "GrandOrgue-mcp"))) / "last_organ.json"
+STATE_FILE = (
+    Path(os.getenv("GO_CONFIG_DIR", str(Path.home() / "AppData" / "Roaming" / "GrandOrgue-mcp"))) / "last_organ.json"
+)
 
 
 def save_last_organ(name: str, path: str) -> None:
@@ -53,7 +55,11 @@ async def load_organ_via_ui(organ_name: str) -> dict[str, Any]:
             data = r.json()
             handle = data.get("handle")
             if not handle:
-                return {"success": False, "message": "GrandOrgue window not found. Is it running?", "method": "pywinauto"}
+                return {
+                    "success": False,
+                    "message": "GrandOrgue window not found. Is it running?",
+                    "method": "pywinauto",
+                }
 
             # 2. Focus window
             await c.post("/automation/windows", json={"operation": "activate", "handle": handle})
@@ -82,23 +88,75 @@ async def load_organ_via_ui(organ_name: str) -> dict[str, Any]:
             return {"success": True, "message": f"Loaded '{organ_name}' via pywinauto-mcp", "method": "pywinauto"}
 
     except httpx.ConnectError:
-        return {"success": False, "message": "pywinauto-mcp not running (port 10788). Start pywinauto-mcp first.", "method": "pywinauto"}
+        return {
+            "success": False,
+            "message": "pywinauto-mcp not running (port 10788). Start pywinauto-mcp first.",
+            "method": "pywinauto",
+        }
+    except Exception as e:
+        return {"success": False, "message": f"pywinauto-mcp failed: {e}", "method": "pywinauto"}
+
+
+async def play_midi_via_ui(midi_filename: str, midi_dir: str = "") -> dict[str, Any]:
+    """Load and play a MIDI file through GrandOrgue's built-in MIDI player.
+
+    Uses pywinauto-mcp to click File -> Load MIDI File -> type filename -> Enter.
+    Routes through GO's own pipe organ engine — no MIDI cables needed.
+
+    Return Format
+    {"success": bool, "message": str, "method": "pywinauto"|None}
+    """
+    if not midi_dir:
+        from grandorgue_mcp.settings_store import resolve_midi_recordings_dir
+
+        midi_dir = str(resolve_midi_recordings_dir())
+    full_path = os.path.join(midi_dir, midi_filename)
+    if not os.path.exists(full_path):
+        return {"success": False, "message": f"MIDI file not found: {full_path}", "method": None}
+    try:
+        async with httpx.AsyncClient(base_url=PYWINAUTO_API, timeout=15) as c:
+            r = await c.post("/automation/windows", json={"operation": "find", "title": "GrandOrgue"})
+            if r.status_code != 200:
+                return {"success": False, "message": "pywinauto-mcp unreachable", "method": "pywinauto"}
+            data = r.json()
+            handle = data.get("handle")
+            if not handle:
+                return {"success": False, "message": "GrandOrgue window not found", "method": "pywinauto"}
+
+            await c.post("/automation/windows", json={"operation": "activate", "handle": handle})
+            await asyncio.sleep(0.3)
+
+            # Open File menu (Alt+F)
+            await c.post("/automation/keyboard", json={"operation": "hotkey", "keys": ["alt", "f"]})
+            await asyncio.sleep(0.3)
+
+            # 'Load MIDI File' — press M (or navigate down and right)
+            await c.post("/automation/keyboard", json={"operation": "press", "key": "m"})
+            await asyncio.sleep(0.5)
+
+            # Type the filename and press Enter
+            await c.post("/automation/keyboard", json={"operation": "type", "text": midi_filename})
+            await asyncio.sleep(0.3)
+            await c.post("/automation/keyboard", json={"operation": "press", "key": "enter"})
+            await asyncio.sleep(2)
+
+            return {
+                "success": True,
+                "message": f"Playing '{midi_filename}' via GO built-in player",
+                "method": "pywinauto",
+            }
+    except httpx.ConnectError:
+        return {"success": False, "message": "pywinauto-mcp not running", "method": "pywinauto"}
     except Exception as e:
         return {"success": False, "message": f"pywinauto-mcp failed: {e}", "method": "pywinauto"}
 
 
 async def ensure_organ_loaded(organ_name: str, organ_path: str) -> dict[str, Any]:
-    """Load an organ into GrandOrgue. Tries pywinauto first, persists for auto-reload.
-
-    After a successful load, GO saves the organ path in its own config.
-    Re-launching GO with the same --config dir will auto-load it.
-    """
+    """Load an organ into GrandOrgue. Tries pywinauto first, persists for auto-reload."""
     result = await load_organ_via_ui(organ_name)
     if result["success"]:
         save_last_organ(organ_name, organ_path)
         return result
-
-    # Fallback: tell the user to load it once manually
     return {
         "success": False,
         "message": (

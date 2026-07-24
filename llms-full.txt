@@ -1,0 +1,115 @@
+# GrandOrgue MCP — Full Documentation
+
+## Overview
+GrandOrgue MCP connects GrandOrgue pipe organ simulator to AI agents and a modern web console. It provides MIDI bridge control, organ management, sample set discovery, and Bach MIDI repertoire via MCP tools and REST API.
+
+## Ports
+| Service | Port |
+|---------|------|
+| Backend (HTTP/MCP/WS) | 11010 |
+| Frontend (Vite dev) | 11011 |
+
+## MCP Tools (30)
+
+### Process Control
+- `go_status` — GrandOrgue process, MIDI, and organ status
+- `go_start` — Launch GrandOrgue
+- `go_stop` — Terminate GrandOrgue
+
+### MIDI Bridge
+- `go_midi_connect` — Open MIDI bridge ports
+- `go_midi_disconnect` — Close MIDI bridge
+- `go_list_midi_ports` — List system MIDI ports
+
+### Organ Control
+- `go_play_note` — Play a single MIDI note
+- `go_play_chord` — Play a chord
+- `go_set_stop` — Toggle a drawstop via MIDI CC
+- `go_set_crescendo` — Set crescendo pedal position
+- `go_set_enclosure` — Set swell enclosure level
+- `go_combination` — Trigger a general piston
+- `go_panic` — All-notes-off
+- `go_send_sysex` — Send raw SYSEX data
+
+### Organ Management
+- `go_load_organ` — Load an organ by name/path
+- `go_auto_load` — Reload last-used organ
+- `go_unload_organ` — Unload current organ
+- `go_list_organs` — List installed sample sets
+- `go_marketplace_search` — Search free sample set catalog
+- `go_marketplace_download` — Get download URL for sample set
+- `go_bach_catalog` — Browse Bach organ works catalog
+
+### MIDI Playback
+- `go_play_midi_file` — Play depot MIDI file via keystroke injection
+- `go_play_midi_file_ui` — Play depot MIDI file via pywinauto
+- `go_midi_playback_status` — Whether MIDI playback is active
+- `go_stop_playback` — Stop MIDI playback
+
+### MIDI Depot
+- `midi_depot_list` — List MIDI files
+- `midi_depot_upload` — Upload MIDI file (base64)
+- `midi_depot_download` — Download MIDI file (base64)
+- `midi_depot_delete` — Delete MIDI file
+- `midi_depot_download_bach` — Fetch Bach MIDI bundle
+
+## REST API Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /health | Liveness probe |
+| GET | /api/status | Server status |
+| GET | /api/settings | App settings |
+| PUT | /api/settings | Save settings |
+| GET | /api/midi/ports | List MIDI ports |
+| POST | /api/midi/connect | Connect MIDI |
+| POST | /api/midi/disconnect | Disconnect MIDI |
+| POST | /api/midi/play | Play MIDI note |
+| POST | /api/midi/stop | Stop playback |
+| GET | /api/midi/playback-status | Playback status |
+| POST | /api/note | Play note |
+| POST | /api/note/off | Release note |
+| POST | /api/stop | Set stop |
+| POST | /api/crescendo | Set crescendo |
+| POST | /api/enclosure | Set enclosure |
+| POST | /api/combination | Trigger combination |
+| POST | /api/panic | All-notes-off |
+| GET | /api/go/status | GO process status |
+| POST | /api/go/start | Start GO |
+| POST | /api/go/stop | Stop GO |
+| GET | /api/organs | List organs |
+| POST | /api/organs/load | Load organ |
+| GET | /api/organs/last | Last loaded organ |
+| GET | /api/catalog | Free catalog |
+| GET | /api/marketplace/search | Search marketplace |
+| GET | /api/bach/catalog | Bach catalog |
+| GET | /api/midi-depot | List depot files |
+| POST | /api/midi-depot/upload | Upload to depot |
+| GET | /api/midi-depot/{name}/download | Download from depot |
+| DELETE | /api/midi-depot/{name} | Delete from depot |
+| GET | /api/midi-depot/{name}/raw | Raw download |
+| POST | /api/midi-depot/batch/bach | Download Bach bundle |
+| GET | /api/llm/providers | LLM provider discovery |
+| POST | /api/llm/chat | LLM chat |
+| GET | /api/skills | Skill listing |
+
+WebSocket: `/ws` — real-time organ status push
+
+## Environment Variables
+| Variable | Default | Description |
+|----------|---------|-------------|
+| PORT | 11010 | Backend HTTP port |
+| HOST | 127.0.0.1 | Backend bind address |
+| MCP_TRANSPORT | stdio | Transport mode (stdio/http) |
+| GRANDORGUE_TAURI | — | Set by Tauri wrapper |
+| GO_EXE_PATH | — | GrandOrgue executable path |
+| MIDI_DEPOT_DIR | — | MIDI depot directory |
+| GO_MIDI_RECORDINGS_DIR | — | MIDI recordings dir |
+| OLLAMA_BASE_URL | http://127.0.0.1:11434 | Ollama endpoint |
+| LMSTUDIO_BASE_URL | http://127.0.0.1:1234 | LM Studio endpoint |
+
+## Architecture
+- Dual transport: stdio (Claude Desktop/mcpb) or HTTP (webapp)
+- FastAPI with CORSMiddleware, MCP mounted at `/mcp`
+- WebSocket for real-time organ state broadcast
+- MIDI via python-rtmidi (virtual MIDI ports)
+- GrandOrgue process management via subprocess + pywinauto

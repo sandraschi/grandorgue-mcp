@@ -1,11 +1,20 @@
-﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+import 'scripts/just/fleet.just'
 
 default:
     @just --list
 
-# Run backend only (port 11010)
+# Run backend only (HTTP mode, port 11010)
 run server:
+    $env:MCP_TRANSPORT = "http"; uv run grandorgue-mcp
+
+# Run backend in stdio mode (what Claude Desktop / mcpb uses)
+run-stdio:
     uv run grandorgue-mcp
+
+# Build the mcpb bundle (staged from canonical src/)
+mcpb:
+    pwsh -NoLogo -File scripts/mcpb-pack.ps1
 
 # Lint and format Python
 lint check:
@@ -54,6 +63,10 @@ build-native-debug:
     $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
     npx @tauri-apps/cli build --debug
 
+# Run CUA smoke test against installed NSIS app
+cua-nsis-test:
+    C:\Windows\py.exe scripts/cua-smoke.py
+
 # Clean build artifacts
 clean:
     powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue dist, build, .ruff_cache, .pytest_cache, web_sota/node_modules, web_sota/dist; Get-ChildItem -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned.'"
@@ -61,4 +74,3 @@ clean:
 # Backend health check
 health:
     curl.exe -s http://127.0.0.1:11010/health
-

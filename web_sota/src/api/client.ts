@@ -44,8 +44,7 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   });
   const body = await r.json().catch(() => ({}));
   if (!r.ok) {
-    const message =
-      typeof body?.message === "string" ? body.message : `HTTP ${r.status}`;
+    const message = typeof body?.message === "string" ? body.message : `HTTP ${r.status}`;
     throw new ApiError(message, r.status);
   }
   return body as T;
@@ -56,6 +55,15 @@ export const api = {
   midiPorts: () => fetchJSON<{ inputs: MidiPort[]; outputs: MidiPort[] }>("/midi/ports"),
   midiConnect: () => fetchJSON<{ success: boolean }>("/midi/connect", { method: "POST" }),
   midiDisconnect: () => fetchJSON<{ success: boolean }>("/midi/disconnect", { method: "POST" }),
+  midiPlay: (name: string) =>
+    fetchJSON<{ success: boolean; message: string; playing: boolean }>("/midi/play", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+  midiStop: () =>
+    fetchJSON<{ success: boolean; message: string }>("/midi/stop", { method: "POST" }),
+  midiPlaybackStatus: () =>
+    fetchJSON<{ success: boolean; playing: boolean }>("/midi/playback-status"),
   playNote: (note: number, velocity = 64, channel = 0) =>
     fetchJSON<{ success: boolean }>("/note", {
       method: "POST",
@@ -92,7 +100,9 @@ export const api = {
   goStop: () => fetchJSON<{ success: boolean }>("/go/stop", { method: "POST" }),
   goStatus: () => fetchJSON<{ running: boolean; pid: number | null }>("/go/status"),
   settings: () => fetchJSON<AppSettings>("/settings"),
-  saveSettings: (settings: Pick<AppSettings, "go_exe_path" | "midi_input_port" | "midi_output_port">) =>
+  saveSettings: (
+    settings: Pick<AppSettings, "go_exe_path" | "midi_input_port" | "midi_output_port">,
+  ) =>
     fetchJSON<AppSettings & { success: boolean }>("/settings", {
       method: "PUT",
       body: JSON.stringify(settings),

@@ -1,6 +1,6 @@
 import { AlertTriangle, Link, Play, RotateCcw, Square, Unlink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { api, ApiError, type MidiPort, type OrganStatus } from "@/api/client";
+import { ApiError, api, type MidiPort, type OrganStatus } from "@/api/client";
 
 export default function Dashboard() {
   const [status, setStatus] = useState<OrganStatus | null>(null);
@@ -74,10 +74,17 @@ export default function Dashboard() {
     }
   };
   const handleAutoLoad = async () => {
+    if (!lastOrgan) return;
     setAutoLoading(true);
-    await api.post("/organs/load", { name: lastOrgan?.name });
-    setAutoLoading(false);
-    await refresh();
+    setError(null);
+    try {
+      await api.post("/organs/load", { name: lastOrgan.name, path: lastOrgan.path });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to auto-load organ");
+    } finally {
+      setAutoLoading(false);
+    }
   };
 
   return (

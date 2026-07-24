@@ -1,0 +1,40 @@
+{
+  "$schema": "https://glama.ai/schemas/mcp-server.json",
+  "id": "grandorgue-mcp",
+  "name": "GrandOrgue MCP",
+  "description": "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management, modern web console",
+  "version": "0.2.0",
+  "server": {
+    "type": "python",
+    "runtime": "uv",
+    "entry_point": "run_server.py",
+    "transport": ["stdio", "http"],
+    "http_port": 11010,
+    "mcp_endpoint": "/mcp",
+    "env": {
+      "MCP_TRANSPORT": "stdio",
+      "PYTHONPATH": "src"
+    },
+    "user_config": {
+      "go_exe_path": {
+        "type": "string",
+        "description": "Full path to GrandOrgue.exe",
+        "required": false
+      }
+    }
+  },
+  "tools": [
+    "go_status", "go_start", "go_stop",
+    "go_midi_connect", "go_midi_disconnect", "go_list_midi_ports",
+    "go_play_note", "go_play_chord", "go_set_stop", "go_set_crescendo",
+    "go_set_enclosure", "go_combination", "go_panic", "go_send_sysex",
+    "go_load_organ", "go_auto_load", "go_unload_organ", "go_list_organs",
+    "go_marketplace_search", "go_marketplace_download", "go_bach_catalog",
+    "go_play_midi_file", "go_play_midi_file_ui", "go_midi_playback_status", "go_stop_playback",
+    "midi_depot_list", "midi_depot_upload", "midi_depot_download", "midi_depot_delete", "midi_depot_download_bach"
+  ],
+  "categories": ["audio", "midi", "entertainment"],
+  "tags": ["grandorgue", "pipe-organ", "midi", "audio", "bach"],
+  "homepage": "https://github.com/sandraschi/grandorgue-mcp",
+  "license": "MIT"
+}

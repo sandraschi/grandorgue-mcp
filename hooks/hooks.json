@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "text",
+        "text": "## Session Context (GrandOrgue MCP)\n\nYou have access to a GrandOrgue pipe organ simulator MCP server with 30 tools for MIDI bridge, organ control, sample set management, and Bach repertoire.\n\n**Before starting work:**\n1. Check current state: `go_status`\n2. Query MIDI ports: `go_list_midi_ports`\n\n**At end of work, save state:**\n- Note organ state for next session"
+      }]
+    }]
+  }
+}

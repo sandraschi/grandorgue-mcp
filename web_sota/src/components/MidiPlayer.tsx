@@ -1,5 +1,5 @@
-import { AlphaTabApi } from "@coderline/alphatab";
-import { FileDown, ListMusic, Music, Music2, Play, Search, SkipBack, Square } from "lucide-react";
+import { AlphaTabApi, PlayerOutputMode } from "@coderline/alphatab";
+import { Church, FileDown, ListMusic, Music, Music2, Play, Search, SkipBack, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/api/client";
 
@@ -15,6 +15,8 @@ export default function MidiPlayer() {
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [goPlaying, setGoPlaying] = useState(false);
+  const [goError, setGoError] = useState<string | null>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<AlphaTabApi | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -45,7 +47,7 @@ export default function MidiPlayer() {
         enablePlayer: true,
         soundFont:
           "https://cdn.jsdelivr.net/npm/@coderline/alphatab@latest/dist/soundfont/sonivox.sf2",
-        useWorkers: false,
+        outputMode: PlayerOutputMode.WebAudioScriptProcessor,
       },
     });
 
@@ -80,11 +82,49 @@ export default function MidiPlayer() {
     }
   };
 
+  const playThroughGo = async () => {
+    if (!current) return;
+    setGoError(null);
+    try {
+      const r = await api.post("/midi/play", { name: current });
+      setGoPlaying(Boolean(r.playing ?? true));
+    } catch (err: any) {
+      setGoPlaying(false);
+      setGoError(err?.message || "GO playback failed. Is the MIDI bridge connected?");
+    }
+  };
+
+  const stopGoPlayback = async () => {
+    setGoError(null);
+    try {
+      await api.post("/midi/stop", {});
+    } catch {
+      // stop is best-effort
+    } finally {
+      setGoPlaying(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-serif text-organ-gold">MIDI Player</h1>
         <div className="flex-1" />
+        <button
+          onClick={playThroughGo}
+          disabled={!current || goPlaying}
+          title="Play through GrandOrgue's pipe organ engine (requires MIDI bridge connected)"
+          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-organ-gold/20 text-organ-gold rounded-lg hover:bg-organ-gold/30 disabled:opacity-40 transition-colors"
+        >
+          <Church size={14} /> Play in GO
+        </button>
+        <button
+          onClick={stopGoPlayback}
+          disabled={!goPlaying}
+          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 disabled:opacity-40 transition-colors"
+        >
+          <Square size={14} /> Stop GO
+        </button>
         <button
           onClick={() => apiRef.current?.play()}
           disabled={playing || !current}
@@ -113,6 +153,12 @@ export default function MidiPlayer() {
           </div>
         )}
       </div>
+
+      {goError && (
+        <div className="rounded-lg border border-amber-800 bg-amber-950/40 px-4 py-2 text-xs text-amber-200">
+          {goError}
+        </div>
+      )}
 
       {files.length > 0 && (
         <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">

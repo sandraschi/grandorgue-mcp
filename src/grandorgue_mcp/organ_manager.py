@@ -47,25 +47,29 @@ class OrganManager:
             return entries
         for path in self._organ_dir.iterdir():
             if path.is_dir():
-                entries.append(SampleSetEntry(
-                    name=path.name,
-                    path=str(path),
-                    installed=True,
-                    description="",
-                ))
+                entries.append(
+                    SampleSetEntry(
+                        name=path.name,
+                        path=str(path),
+                        installed=True,
+                        description="",
+                    )
+                )
         return entries
 
     def list_catalog(self) -> list[SampleSetEntry]:
         entries: list[SampleSetEntry] = []
         for src in FREE_SAMPLE_SET_SOURCES:
-            entries.append(SampleSetEntry(
-                name=src["name"],
-                path="",
-                installed=False,
-                url=src["url"],
-                description=src["description"],
-                is_free=True,
-            ))
+            entries.append(
+                SampleSetEntry(
+                    name=src["name"],
+                    path="",
+                    installed=False,
+                    url=src["url"],
+                    description=src["description"],
+                    is_free=True,
+                )
+            )
         return entries
 
     def load_organ(self, path: str) -> OrganInfo:

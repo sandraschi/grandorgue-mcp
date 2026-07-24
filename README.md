@@ -5,7 +5,7 @@
   <a href="https://github.com/sandraschi/grandorgue-mcp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License"></a>
   <a href="https://github.com/sandraschi/grandorgue-mcp/actions/workflows/ci.yml"><img src="https://github.com/sandraschi/grandorgue-mcp/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
-  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
+  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.4-7c5cfc?style=flat-square" alt="FastMCP"></a>
   <a href="https://github.com/sandraschi/grandorgue-mcp"><img src="https://img.shields.io/badge/MIDI-bridge-009688?style=flat-square" alt="MIDI"></a>
   <a href="https://github.com/sandraschi/grandorgue-mcp"><img src="https://img.shields.io/badge/fleet-SOTA-6366f1?style=flat-square" alt="Fleet SOTA"></a>
   <a href="https://grandorgue-mcp.fleet.ai"><img src="https://img.shields.io/badge/React-18-d1d5db?style=flat-square&logo=react&logoColor=61DAFB" alt="React"></a>
@@ -57,7 +57,13 @@ just install-web
 just web
 ```
 
-The backend starts on **port 11010**, the frontend on **port 11011**.
+The backend starts on **port 11010** (HTTP mode), the frontend on **port 11011**.
+
+### Claude Desktop (stdio)
+
+The server defaults to **stdio** transport for MCP clients. Build the bundle with
+`just mcpb` and install `dist/grandorgue-mcp-vX.Y.Z.mcpb` in Claude Desktop.
+The webapp uses HTTP mode (`MCP_TRANSPORT=http`), which `just web` sets automatically.
 
 ### Manual Start
 
@@ -66,7 +72,7 @@ The backend starts on **port 11010**, the frontend on **port 11011**.
 uv run grandorgue-mcp
 
 # Terminal 2 — Frontend (opens browser)
-cd web_sota && npm run dev
+cd web_sota && bun run dev
 ```
 
 ### First-Time Setup
@@ -84,7 +90,7 @@ cd web_sota && npm run dev
 
 | Port | Service |
 |------|---------|
-| 11010 | Backend — FastMCP 3.2 + FastAPI REST + WebSocket `/ws` |
+| 11010 | Backend (HTTP mode) — FastMCP 3.4 (`/mcp`) + FastAPI REST + WebSocket `/ws` |
 | 11011 | Frontend — Vite React SPA, proxies `/api` → 11010 |
 
 ---
@@ -93,10 +99,10 @@ cd web_sota && npm run dev
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python 3.12+, FastMCP 3.2, FastAPI, uvicorn |
+| Backend | Python 3.12+, FastMCP 3.4, FastAPI, uvicorn |
 | MIDI Bridge | mido + python-rtmidi (virtual ports) |
 | Audio Engine | GrandOrgue C++ (untouched — MIDI control only) |
-| Frontend | React 18, TypeScript, Tailwind CSS, Vite |
+| Frontend | React 18, TypeScript, Tailwind CSS, Vite (Bun) |
 | Linting | Ruff (Python), Biome (TypeScript) |
 | Testing | pytest + Playwright e2e |
 

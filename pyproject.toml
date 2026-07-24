@@ -1,19 +1,19 @@
 [project]
 name = "grandorgue-mcp"
-version = "0.1.0"
+version = "0.2.0"
 description = "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management, modern web console"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastmcp>=3.2",
+    "fastmcp>=3.4.4,<4",
     "fastapi>=0.104",
     "uvicorn[standard]>=0.23",
     "httpx>=0.27",
     "pydantic>=2.0",
-    "prefab-ui>=0.18.0",
+    "anyio>=4.0",
     "mido>=1.3",
     "python-rtmidi>=1.5",
-    "websockets>=12.0",
+    "prefab-ui>=0.14.0",
 ]
 
 [project.optional-dependencies]

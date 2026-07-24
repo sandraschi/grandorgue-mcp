@@ -1,48 +1,97 @@
+$ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$RepoName = "grandorgue-mcp"
-$PackageName = "grandorgue_mcp"
-$BackendPath = "$PSScriptRoot\binaries"
-$TargetTriple = "x86_64-pc-windows-msvc"
+$RepoName = Split-Path -Leaf $Root
+$Triple = "x86_64-pc-windows-msvc"
+$ResourceDir = "$PSScriptRoot\resources"
+$DevDir = "$PSScriptRoot\binaries"
+New-Item -ItemType Directory -Force -Path $ResourceDir, $DevDir | Out-Null
 
-Write-Host "=== GrandOrgue MCP Tauri Build ===" -ForegroundColor Cyan
+Write-Host "=== ${RepoName} Tauri Release Build ===" -ForegroundColor Cyan
 
-# Step 1: Build React frontend
-Write-Host "`n[1/4] Building React frontend..." -ForegroundColor Yellow
-Push-Location "$Root\web_sota"
-npm install
-npm run build
-if ($LASTEXITCODE -ne 0) { Write-Host "Frontend build failed!" -ForegroundColor Red; exit 1 }
-Write-Host "  Frontend built." -ForegroundColor Green
-Pop-Location
+# Step 1: TypeScript lint gate + frontend build
+$frontendDirs = @("web_sota", "webapp/frontend", "webapp")
+foreach ($dir in $frontendDirs) {
+    $frontend = Join-Path $Root $dir
+    if (Test-Path "$frontend\package.json") {
+        Write-Host "-> [1/4] Building frontend ($dir)..." -ForegroundColor Yellow
+        Push-Location $frontend
+        npm install --silent 2>$null
 
-# Step 2: Build Python backend as standalone .exe
-Write-Host "`n[2/4] Bundling Python backend (PyInstaller)..." -ForegroundColor Yellow
-Push-Location "$Root"
-& "C:\Users\sandr\.local\bin\uv.exe" run pyinstaller `
-    --onedir -y --clean `
-    --name "${RepoName}-backend" `
-    --add-data "src/${PackageName};${PackageName}" `
-    --copy-metadata fastmcp --copy-metadata fastapi `
-    --hidden-import uvicorn.logging `
-    run_server.py
-if ($LASTEXITCODE -ne 0) { Write-Host "PyInstaller failed!" -ForegroundColor Red; exit 1 }
-Write-Host "  Backend bundled." -ForegroundColor Green
-Pop-Location
+        Write-Host "  tsc --noEmit..." -ForegroundColor Gray
+        $tscOut = npx tsc --noEmit 2>&1
+        $tscExit = $LASTEXITCODE
+        if ($tscExit -ne 0) {
+            Write-Host "  TypeScript compilation FAILED — fix errors before building NSIS" -ForegroundColor Red
+            Write-Host $tscOut
+            throw "TypeScript compilation failed — fix all errors before building NSIS installer"
+        }
 
-# Step 3: Copy sidecar binary for Tauri
-Write-Host "`n[3/4] Copying sidecar..." -ForegroundColor Yellow
-New-Item -ItemType Directory -Force -Path $BackendPath | Out-Null
-Copy-Item "$Root\dist\${RepoName}-backend\${RepoName}-backend.exe" `
-    "$BackendPath\${RepoName}-backend-${TargetTriple}.exe" -Force
-Write-Host "  Sidecar copied." -ForegroundColor Green
+        npm run build
+        if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
+        Pop-Location
+        break
+    }
+}
 
-# Step 4: Build Tauri bundle
-Write-Host "`n[4/4] Building Tauri bundle..." -ForegroundColor Yellow
+# Step 2: PyInstaller backend (onefile)
+Write-Host "-> [2/4] PyInstaller backend..." -ForegroundColor Yellow
+$specFile = "$Root\${RepoName}-backend.spec"
+if (Test-Path $specFile) {
+    Push-Location $Root
+    # Patch fastmcp to not crash on missing metadata (dist-info stripped below)
+    $fm = "$Root\.venv\Lib\site-packages\fastmcp\__init__.py"
+    if (Test-Path $fm) {
+        $c = Get-Content $fm -Raw
+        if ($c -match 'except PackageNotFoundError:\s+    __version__ = _version\("fastmcp"\)') {
+            $c = $c -replace 'except PackageNotFoundError:\s+    __version__ = _version\("fastmcp"\)', 'except PackageNotFoundError:
+    try:
+        __version__ = _version("fastmcp")
+    except PackageNotFoundError:
+        __version__ = "0.0.0"'
+            Set-Content $fm -Value $c -Encoding utf8
+            Write-Host "  Patched fastmcp metadata fallback" -ForegroundColor Yellow
+        }
+    }
+    uv run pyinstaller "$specFile" --clean --noconfirm
+    if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE" }
+    Pop-Location
+} else {
+    Write-Host "  WARNING: spec file not found at $specFile — using existing backend exe if present" -ForegroundColor DarkYellow
+}
+
+# Step 3: Embed in Tauri resources (+ dev fallback)
+Write-Host "-> [3/4] Embedding backend..." -ForegroundColor Yellow
+$src = "$Root\dist\${RepoName}-backend.exe"
+if (-not (Test-Path $src)) { throw "Backend exe not found at $src — PyInstaller step failed" }
+Copy-Item $src "$ResourceDir\${RepoName}-backend.exe" -Force
+Copy-Item $src "$DevDir\${RepoName}-backend-$Triple.exe" -Force
+Write-Host "  Backend exe: $((Get-Item $src).Length / 1MB) MB"
+
+# Bundle .env.example (NOT .env — dev .env has personal API keys)
+$envExample = "$Root\.env.example"
+if (Test-Path $envExample) {
+    Copy-Item $envExample "$ResourceDir\.env.example" -Force
+    Write-Host "  Bundled .env.example ✓" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: .env.example not found at repo root — configure via Settings page" -ForegroundColor DarkYellow
+}
+
+# Step 4: Single NSIS installer
+Write-Host "-> [4/4] Tauri NSIS bundle..." -ForegroundColor Yellow
 Push-Location $PSScriptRoot
-npx @tauri-apps/cli build
-if ($LASTEXITCODE -ne 0) { Write-Host "Tauri build failed!" -ForegroundColor Red; exit 1 }
-Write-Host "  Tauri bundle built." -ForegroundColor Green
+$env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+npx @tauri-apps/cli build --bundles nsis
+if ($LASTEXITCODE -ne 0) { throw "Tauri build failed with exit code $LASTEXITCODE" }
 Pop-Location
 
-Write-Host "`n=== Build complete ===" -ForegroundColor Cyan
-Write-Host "Installer: native\target\release\bundle\nsis\GrandOrgue MCP_0.1.0_x64-setup.exe" -ForegroundColor Green
+# Stage to repo dist/
+$distDir = Join-Path $Root "dist"
+New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+$nsisDir = "$PSScriptRoot\target\release\bundle\nsis"
+if (Test-Path $nsisDir) { Copy-Item "$nsisDir\*-setup.exe" "$distDir\" -Force }
+$strayExe = "$PSScriptRoot\target\release\grandorgue-mcp-backend.exe"
+if (Test-Path $strayExe) { Remove-Item $strayExe -Force; Write-Host "  Cleaned stray: $strayExe" -ForegroundColor DarkGray }
+
+Write-Host "=== Build complete ===" -ForegroundColor Green
+Write-Host "Ship: $nsisDir\*.exe"
+
