@@ -221,12 +221,25 @@ async def _depot_bach_impl() -> dict[str, Any]:
 # -- MCP Tools ---------------------------------------------------------------
 
 
+@mcp.resource("status://grandorgue")
+async def status_resource() -> dict[str, Any]:
+    """Live GrandOrgue status as an MCP resource.
+
+    ## Return Format
+    {"success": bool, "go_running": bool, "midi_connected": bool, "organ": {...}}
+    """
+    return await _status_payload()
+
+
 @mcp.tool()
 async def go_status() -> dict[str, Any]:
     """Get GrandOrgue process, MIDI, and organ status.
 
     ## Return Format
     {"success": bool, "go_running": bool, "midi_connected": bool, "organ": {...}}
+
+    ## Examples
+    go_status()
     """
     payload = await _status_payload()
     return {"success": True, **payload}
@@ -246,6 +259,10 @@ async def go_start(
 
     ## Return Format
     {"success": bool, "message": str, "pid": int|null, "auto_loaded": str|null}
+
+    ## Examples
+    go_start()
+    go_start(organ_path="C:/GrandOrgue/organs/Burea/Burea.organ")
     """
     try:
         info = await anyio.to_thread.run_sync(partial(go_process.start, organ_path))
@@ -274,6 +291,9 @@ async def go_stop() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "message": str}
+
+    ## Examples
+    go_stop()
     """
     ok = await anyio.to_thread.run_sync(go_process.stop)
     await anyio.to_thread.run_sync(midi_bridge.disconnect)
@@ -287,6 +307,9 @@ async def go_midi_connect() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "message": str, "ports": {"input": str, "output": str}}
+
+    ## Examples
+    go_midi_connect()
     """
     ok = await anyio.to_thread.run_sync(midi_bridge.connect)
     status = await anyio.to_thread.run_sync(midi_bridge.list_ports)
@@ -304,6 +327,9 @@ async def go_midi_disconnect() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool}
+
+    ## Examples
+    go_midi_disconnect()
     """
     await anyio.to_thread.run_sync(midi_bridge.disconnect)
     await _notify_status()
@@ -316,6 +342,9 @@ async def go_list_midi_ports() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "inputs": [...], "outputs": [...]}
+
+    ## Examples
+    go_list_midi_ports()
     """
     status = await anyio.to_thread.run_sync(midi_bridge.list_ports)
     return {
@@ -343,6 +372,9 @@ async def go_play_note(
 
     ## Return Format
     {"success": bool, "note": int, "velocity": int, "channel": int}
+
+    ## Examples
+    go_play_note(midi_note=60, velocity=80, duration_ms=1000)
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected. Run go_midi_connect first."}
@@ -363,6 +395,9 @@ async def go_play_chord(
 
     ## Return Format
     {"success": bool, "notes": [...], "velocity": int}
+
+    ## Examples
+    go_play_chord(notes=[60, 64, 67], duration_ms=1500)
     """
     if notes is None:
         notes = [60, 64, 67]
@@ -383,6 +418,9 @@ async def go_set_stop(
 
     ## Return Format
     {"success": bool, "stop_cc": int, "state": bool}
+
+    ## Examples
+    go_set_stop(stop_cc=21, state=True)
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
@@ -398,6 +436,9 @@ async def go_set_crescendo(
 
     ## Return Format
     {"success": bool, "value": int}
+
+    ## Examples
+    go_set_crescendo(value=64)
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
@@ -414,6 +455,9 @@ async def go_set_enclosure(
 
     ## Return Format
     {"success": bool, "cc": int, "value": int}
+
+    ## Examples
+    go_set_enclosure(cc=7, value=80)
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
@@ -427,6 +471,9 @@ async def go_combination(number: int = 1) -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "number": int}
+
+    ## Examples
+    go_combination(number=3)
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
@@ -440,6 +487,9 @@ async def go_panic() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool}
+
+    ## Examples
+    go_panic()
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
@@ -478,6 +528,9 @@ async def go_auto_load() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "organ": str|null, "message": str}
+
+    ## Examples
+    go_auto_load()
     """
     last = load_last_organ()
     if not last or not last.get("name"):
@@ -497,6 +550,9 @@ async def go_unload_organ() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool}
+
+    ## Examples
+    go_unload_organ()
     """
     organ_manager.unload_organ()
     await _notify_status()
@@ -509,6 +565,9 @@ async def go_list_organs() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "installed": [...], "catalog": [...]}
+
+    ## Examples
+    go_list_organs()
     """
     installed = organ_manager.list_installed()
     catalog = organ_manager.list_catalog()
@@ -525,6 +584,9 @@ async def go_send_sysex(data_hex: str = "") -> dict[str, Any]:
 
     ## Return Format
     {"success": bool}
+
+    ## Examples
+    go_send_sysex(data_hex="F0 7D 01 00 F7")
     """
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
@@ -542,6 +604,9 @@ async def go_marketplace_search(query: str = "") -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "results": [...], "total": int}
+
+    ## Examples
+    go_marketplace_search(query="Baroque")
     """
     catalog = organ_manager.list_catalog()
     results = [e.model_dump() for e in catalog]
@@ -557,6 +622,9 @@ async def go_marketplace_download(name: str = "") -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "name": str, "url": str|null, "instructions": str}
+
+    ## Examples
+    go_marketplace_download(name="Burea Church")
     """
     catalog = organ_manager.list_catalog()
     for entry in catalog:
@@ -579,6 +647,10 @@ async def go_bach_catalog(bwv: int | None = None) -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "works": [...], "total": int}
+
+    ## Examples
+    go_bach_catalog(bwv=565)
+    go_bach_catalog()
     """
     works = search_bach(bwv)
     return {"success": True, "works": works, "total": len(works)}
@@ -596,6 +668,9 @@ async def go_play_midi_file(
 
     ## Return Format
     {"success": bool, "message": str}
+
+    ## Examples
+    go_play_midi_file(name="fugue1.mid")
     """
     from grandorgue_mcp.win32midi import load_midi_file_in_go
 
@@ -613,6 +688,9 @@ async def go_play_midi_file_ui(
 
     ## Return Format
     {"success": bool, "message": str}
+
+    ## Examples
+    go_play_midi_file_ui(name="bwv543.mid")
     """
     import shutil
 
@@ -634,6 +712,9 @@ async def go_midi_playback_status() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "playing": bool}
+
+    ## Examples
+    go_midi_playback_status()
     """
     return {"success": True, "playing": midi_bridge.playback_active}
 
@@ -644,6 +725,9 @@ async def go_stop_playback() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "message": str}
+
+    ## Examples
+    go_stop_playback()
     """
     msg = await anyio.to_thread.run_sync(midi_bridge.stop_playback)
     return {"success": True, "message": msg}
@@ -655,6 +739,9 @@ async def midi_depot_list() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "files": [{"name": str, "size_bytes": int, "modified": float}]}
+
+    ## Examples
+    midi_depot_list()
     """
     return _depot_list_impl()
 
@@ -665,6 +752,9 @@ async def midi_depot_upload(name: str, data_base64: str) -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "path": str}
+
+    ## Examples
+    midi_depot_upload(name="my.mid", data_base64="...")
     """
     return _depot_upload_impl(name, data_base64)
 
@@ -675,6 +765,9 @@ async def midi_depot_download(name: str) -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "name": str, "data_base64": str, "size_bytes": int}
+
+    ## Examples
+    midi_depot_download(name="fugue1.mid")
     """
     return _depot_download_impl(name)
 
@@ -685,6 +778,9 @@ async def midi_depot_delete(name: str) -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "message": str}
+
+    ## Examples
+    midi_depot_delete(name="fugue1.mid")
     """
     return _depot_delete_impl(name)
 
@@ -697,6 +793,9 @@ async def midi_depot_download_bach() -> dict[str, Any]:
 
     ## Return Format
     {"success": bool, "count": int, "files": [str], "message": str}
+
+    ## Examples
+    midi_depot_download_bach()
     """
     return await _depot_bach_impl()
 
@@ -1146,6 +1245,59 @@ async def api_llm_chat(body: dict[str, Any]) -> JSONResponse:
             return JSONResponse(status_code=502, content={"response": f"Upstream HTTP {resp.status_code}"})
     except Exception as e:
         return JSONResponse(status_code=502, content={"response": f"Error: {e}"})
+
+
+@app.get("/api/v1/diagnostics")
+async def api_diagnostics() -> dict[str, Any]:
+    """Full diagnostics for CUA-NSIS smoke testing.
+
+    ## Return Format
+    {"status": str, "server": str, "version": str, "tool_count": int,
+     "tools": [{"name": str}], "system": {...}, "go_running": bool}
+    """
+    payload = await _status_payload()
+    _tool_names = [
+        "go_status",
+        "go_start",
+        "go_stop",
+        "go_midi_connect",
+        "go_midi_disconnect",
+        "go_list_midi_ports",
+        "go_play_note",
+        "go_play_chord",
+        "go_set_stop",
+        "go_set_crescendo",
+        "go_set_enclosure",
+        "go_combination",
+        "go_panic",
+        "go_load_organ",
+        "go_auto_load",
+        "go_unload_organ",
+        "go_list_organs",
+        "go_send_sysex",
+        "go_marketplace_search",
+        "go_marketplace_download",
+        "go_bach_catalog",
+        "go_play_midi_file",
+        "go_play_midi_file_ui",
+        "go_midi_playback_status",
+        "go_stop_playback",
+        "midi_depot_list",
+        "midi_depot_upload",
+        "midi_depot_download",
+        "midi_depot_delete",
+        "midi_depot_download_bach",
+        "grandorgue_shutdown",
+    ]
+    return {
+        "status": "ok",
+        "server": "grandorgue-mcp",
+        "version": "0.2.0",
+        "tool_count": len(_tool_names),
+        "tools": [{"name": n} for n in sorted(_tool_names)],
+        "system": {"windows": True},
+        **payload,
+    }
 
 
 @app.get("/api/skills")

@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import { useZoom } from "./hooks/useZoom";
 import AudioMixer from "./components/AudioMixer";
 import CombinationMemory from "./components/CombinationMemory";
 import Dashboard from "./components/Dashboard";
@@ -14,6 +15,7 @@ import Topbar from "./components/Topbar";
 import FloatingChat from "./components/FloatingChat";
 
 export default function App() {
+  useZoom();
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
