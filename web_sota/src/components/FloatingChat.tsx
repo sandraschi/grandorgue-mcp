@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLLMStore } from "@/store/llm";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,9 +19,7 @@ export default function FloatingChat() {
   const [chat, setChat] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [provider, setProvider] = useState(() => localStorage.getItem("llm_provider") || "ollama");
-  const [model, setModel] = useState(() => localStorage.getItem("llm_model") || "");
-  const [modelList, setModelList] = useState<string[]>([]);
+  const llmStore = useLLMStore();
   const [skillName, setSkillName] = useState("");
   const [personality, setPersonality] = useState(() => localStorage.getItem("fc_personality") || "helpful");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -42,23 +41,9 @@ export default function FloatingChat() {
   }, [chat]);
 
   useEffect(() => {
-    fetch("/api/llm/providers")
-      .then((r) => r.json())
-      .then((d) => {
-        const providers = d.providers || d;
-        const list: string[] = [];
-        if (Array.isArray(providers)) {
-          for (const p of providers) {
-            if (p.models) list.push(...p.models);
-          }
-        }
-        setModelList(list);
-        if (!model && list.length > 0) {
-          setModel(list[0]);
-          localStorage.setItem("llm_model", list[0]);
-        }
-      })
-      .catch(() => {});
+    if (!llmStore.selectedModel && llmStore.providers.some(p => p.status === "detected")) {
+      llmStore.probeAll();
+    }
   }, []);
 
   useEffect(() => {
@@ -82,7 +67,7 @@ export default function FloatingChat() {
       const r = await fetch("/api/llm/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, model, prompt: text, system: sp?.prompt }),
+        body: JSON.stringify({ provider: llmStore.selectedProvider, model: llmStore.selectedModel, prompt: text, system: sp?.prompt }),
       });
       const data = await r.json();
       setChat((prev) => [...prev, { role: "assistant", content: data.response || data.error || "No response" }]);
@@ -130,14 +115,10 @@ export default function FloatingChat() {
               >
                 {PERSONALITIES.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
               </select>
-              {modelList.length > 0 && (
-                <select
-                  className="bg-slate-800 border border-slate-600 rounded text-xs px-2 py-1 text-slate-300 max-w-[140px]"
-                  value={model}
-                  onChange={(e) => { setModel(e.target.value); localStorage.setItem("llm_model", e.target.value); }}
-                >
-                  {modelList.map((m) => <option key={m} value={m}>{m.split(":")[0]}</option>)}
-                </select>
+              {llmStore.selectedModel && (
+                <span className="text-[10px] text-zinc-500 truncate max-w-[100px]" title={llmStore.selectedModel}>
+                  {llmStore.selectedModel.split(":")[0]}
+                </span>
               )}
               <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-slate-300 text-lg leading-none">&times;</button>
             </div>
