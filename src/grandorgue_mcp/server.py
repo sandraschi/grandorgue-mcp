@@ -14,7 +14,9 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
+import json
 import os as _os
+import sqlite3 as _sqlite3
 import zipfile
 from functools import partial
 from pathlib import Path
@@ -1310,6 +1312,100 @@ async def api_skills() -> JSONResponse:
             }
         ]
     )
+
+
+# -- Registration Store (in-memory SQLite) ----------------------------------
+
+_REG_DB: _sqlite3.Connection | None = None
+
+
+def _get_reg_db() -> _sqlite3.Connection:
+    global _REG_DB
+    if _REG_DB is None:
+        _REG_DB = _sqlite3.connect(
+            str(
+                Path(_os.getenv("GO_CONFIG_DIR", str(Path.home() / "AppData" / "Roaming" / "GrandOrgue-mcp")))
+                / "registrations.sqlite"
+            )
+        )
+        _REG_DB.row_factory = _sqlite3.Row
+        _REG_DB.execute(
+            """CREATE TABLE IF NOT EXISTS registrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organ TEXT NOT NULL DEFAULT '',
+            name TEXT NOT NULL,
+            stops TEXT NOT NULL DEFAULT '[]',
+            created TEXT DEFAULT (datetime('now')),
+            updated TEXT DEFAULT (datetime('now'))
+        )"""
+        )
+    return _REG_DB
+
+
+@app.get("/api/registrations")
+async def api_registrations_list(organ: str = "") -> JSONResponse:
+    db = _get_reg_db()
+    if organ:
+        rows = db.execute("SELECT * FROM registrations WHERE organ = ? ORDER BY updated DESC", (organ,)).fetchall()
+    else:
+        rows = db.execute("SELECT * FROM registrations ORDER BY updated DESC").fetchall()
+    return JSONResponse(content={"success": True, "registrations": [dict(r) for r in rows]})
+
+
+@app.post("/api/registrations")
+async def api_registrations_create(body: dict[str, Any]) -> JSONResponse:
+    db = _get_reg_db()
+    name = body.get("name", "Unnamed")
+    organ = body.get("organ", "")
+    stops = body.get("stops", [])
+    cur = db.execute(
+        "INSERT INTO registrations (organ, name, stops) VALUES (?, ?, ?)",
+        (organ, name, json.dumps(stops) if isinstance(stops, list) else stops),
+    )
+    db.commit()
+    return JSONResponse(content={"success": True, "id": cur.lastrowid})
+
+
+@app.put("/api/registrations/{reg_id}")
+async def api_registrations_update(reg_id: int, body: dict[str, Any]) -> JSONResponse:
+    db = _get_reg_db()
+    name = body.get("name")
+    stops = body.get("stops")
+    if name is not None:
+        db.execute("UPDATE registrations SET name = ?, updated = datetime('now') WHERE id = ?", (name, reg_id))
+    if stops is not None:
+        db.execute(
+            "UPDATE registrations SET stops = ?, updated = datetime('now') WHERE id = ?",
+            (json.dumps(stops) if isinstance(stops, list) else stops, reg_id),
+        )
+    db.commit()
+    return JSONResponse(content={"success": True})
+
+
+@app.delete("/api/registrations/{reg_id}")
+async def api_registrations_delete(reg_id: int) -> JSONResponse:
+    db = _get_reg_db()
+    db.execute("DELETE FROM registrations WHERE id = ?", (reg_id,))
+    db.commit()
+    return JSONResponse(content={"success": True})
+
+
+@app.post("/api/registrations/{reg_id}/apply")
+async def api_registrations_apply(reg_id: int) -> JSONResponse:
+    """Apply a saved registration to GrandOrgue via MIDI CC."""
+    db = _get_reg_db()
+    row = db.execute("SELECT * FROM registrations WHERE id = ?", (reg_id,)).fetchone()
+    if not row:
+        return JSONResponse(status_code=404, content={"success": False, "message": "Registration not found"})
+    if not midi_bridge.connected:
+        return JSONResponse(status_code=400, content={"success": False, "message": "MIDI not connected"})
+    stops = json.loads(row["stops"]) if isinstance(row["stops"], str) else row["stops"]
+    for stop in stops:
+        cc = stop.get("cc") or stop.get("midi_cc")
+        state = stop.get("state", True)
+        if cc is not None:
+            midi_bridge.set_stop(cc, state)
+    return JSONResponse(content={"success": True, "applied": len(stops)})
 
 
 # -- WebSocket ----------------------------------------------------------------

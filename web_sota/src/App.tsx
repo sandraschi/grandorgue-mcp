@@ -3,12 +3,16 @@ import { useZoom } from "./hooks/useZoom";
 import AudioMixer from "./components/AudioMixer";
 import CombinationMemory from "./components/CombinationMemory";
 import Dashboard from "./components/Dashboard";
+import PracticeStudio from "./components/PracticeStudio";
+import RegistrationAssistant from "./components/RegistrationAssistant";
 import Marketplace from "./components/Marketplace";
 import MidiDepot from "./components/MidiDepot";
 import MidiPlayer from "./components/MidiPlayer";
 import OrganBrowser from "./components/OrganBrowser";
 import OrganConsole from "./components/OrganConsole";
+import OrganVisualizer from "./components/OrganVisualizer";
 import RecordPanel from "./components/RecordPanel";
+import RegistrationManager from "./components/RegistrationManager";
 import Settings from "./components/Settings";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
@@ -29,9 +33,13 @@ export default function App() {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/combinations" element={<CombinationMemory />} />
             <Route path="/record" element={<RecordPanel />} />
+            <Route path="/registrations" element={<RegistrationManager />} />
             <Route path="/midi-depot" element={<MidiDepot />} />
             <Route path="/midi-player" element={<MidiPlayer />} />
+            <Route path="/assistant" element={<RegistrationAssistant />} />
             <Route path="/mixer" element={<AudioMixer />} />
+            <Route path="/visualizer" element={<OrganVisualizer />} />
+            <Route path="/practice" element={<PracticeStudio />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

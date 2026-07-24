@@ -1,11 +1,14 @@
 import {
+  Bookmark,
   Circle,
   Disc,
   Layers,
+  Sparkles,
   Library,
   Monitor,
   Music,
   Play,
+  Radio,
   Settings,
   ShoppingBag,
   Volume2,
@@ -19,9 +22,13 @@ const links = [
   { to: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
   { to: "/combinations", icon: Layers, label: "Memory" },
   { to: "/record", icon: Circle, label: "Record" },
+  { to: "/registrations", icon: Bookmark, label: "Registrations" },
   { to: "/midi-depot", icon: Disc, label: "MIDI Depot" },
   { to: "/midi-player", icon: Play, label: "Player" },
   { to: "/mixer", icon: Volume2, label: "Mixer" },
+  { to: "/assistant", icon: Sparkles, label: "Assistant" },
+  { to: "/visualizer", icon: Radio, label: "Visualizer" },
+  { to: "/practice", icon: Music, label: "Practice" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 

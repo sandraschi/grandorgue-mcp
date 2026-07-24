@@ -1,3 +1,38 @@
+# grandorgue-mcp v0.3.0 — 2026-07-24
+
+Major expansion: Pipe Organ Visualizer, Registration Manager, Smart Registration Assistant, Bach Practice Studio.
+
+## New Features
+
+- **Pipe Organ Visualizer** — Real-time animated pipe facade. HTML Canvas renderer with 92 pipes across 4 manual divisions (Great/Swell/Pedal/Choir). Pipes glow amber on note-on with smooth decay animation. Stop rail at bottom with live state. Connects via WebSocket `/ws` for real-time MIDI events.
+
+- **Registration Manager** — Full CRUD for stop combinations. Drag-and-drop stop entry builder (CC#, name, on/off). Save/update/delete per registration. Apply registrations to GrandOrgue via MIDI CC. JSON export/import for sharing.
+
+- **Smart Registration Assistant** — AI-powered registration suggestions using the local LLM. Ask for stop combinations for any piece, composer, style, or organ. Quick prompt pills for common requests. Parses LLM JSON responses into structured suggestions.
+
+- **Bach Practice Studio** — Enhanced MIDI player with speed control (25-200%), loop A/B section markers, and "Play in GrandOrgue" routing. One-click Bach bundle download (176 MIDI files).
+
+- **GET /api/v1/diagnostics** endpoint for CUA-NSIS smoke testing
+- **@mcp.resource("status://grandorgue")** for live MCP resource status
+- **useZoom() hook** — Ctrl+Scroll zoom through {0.8, 1.0, 1.25, 1.5, 2.0, 3.0}, persisted to localStorage
+
+## Registration Store API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/registrations | List saved registrations |
+| POST | /api/registrations | Create registration |
+| PUT | /api/registrations/{id} | Update registration |
+| DELETE | /api/registrations/{id} | Delete registration |
+| POST | /api/registrations/{id}/apply | Apply to GrandOrgue via MIDI CC |
+
+## Tool Docstrings
+
+- Added `## Return Format` and `## Examples` to all 31 MCP tools
+- Added tool annotations pattern for future use
+
+---
+
 # grandorgue-mcp v0.2.0 — 2026-07-10
 
 Full remediation release following the 2026-07-10 repo assessment
