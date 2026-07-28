@@ -1,7 +1,7 @@
 [project]
 name = "grandorgue-mcp"
 version = "0.3.0"
-description = "GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sample set management, modern web console"
+description = "GrandOrgue pipe organ simulator MCP server â€” MIDI bridge, organ control, sample set management, modern web console"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -20,7 +20,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.21",
-    "ruff>=0.9",
+    "ruff>=0.16.0,<0.17",
     "playwright>=1.50",
 ]
 icons = ["pillow>=11"]
