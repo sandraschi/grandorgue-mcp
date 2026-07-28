@@ -1,4 +1,4 @@
-set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 import 'scripts/just/fleet.just'
 
 default:
@@ -14,7 +14,7 @@ run-stdio:
 
 # Build the mcpb bundle (staged from canonical src/)
 mcpb:
-    pwsh -NoLogo -File scripts/mcpb-pack.ps1
+    powershell.exe -NoProfile -File scripts/mcpb-pack.ps1
 
 # Lint and format Python
 lint check:
@@ -62,10 +62,6 @@ build-native-debug:
     Set-Location '{{justfile_directory()}}\native'
     $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
     npx @tauri-apps/cli build --debug
-
-# Run CUA smoke test against installed NSIS app
-cua-nsis-test:
-    C:\Windows\py.exe scripts/cua-smoke.py
 
 # Clean build artifacts
 clean:
