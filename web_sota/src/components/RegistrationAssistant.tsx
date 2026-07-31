@@ -35,7 +35,8 @@ export default function RegistrationAssistant() {
           provider: localStorage.getItem("llm_provider") || "ollama",
           model: localStorage.getItem("llm_model") || "llama3.2:3b",
           prompt: query,
-          system: "You are a pipe organ registration expert. Suggest 2-3 stop combinations for the given piece/organ/style. For each suggestion, provide: a name, the specific stops to draw (as a comma-separated list), and a brief explanation of why this registration works. Format as JSON array: [{\"name\": \"...\", \"stops\": \"...\", \"description\": \"...\"}]. Respond with ONLY the JSON, no other text.",
+          system:
+            'You are a pipe organ registration expert. Suggest 2-3 stop combinations for the given piece/organ/style. For each suggestion, provide: a name, the specific stops to draw (as a comma-separated list), and a brief explanation of why this registration works. Format as JSON array: [{"name": "...", "stops": "...", "description": "..."}]. Respond with ONLY the JSON, no other text.',
         }),
       });
       const data = await r.json();
@@ -45,7 +46,13 @@ export default function RegistrationAssistant() {
         const jsonMatch = content.match(/\[[\s\S]*\]/);
         parsed = JSON.parse(jsonMatch ? jsonMatch[0] : content);
       } catch {
-        parsed = [{ name: "Suggested Registration", stops: content.substring(0, 200), description: "Raw suggestion from LLM" }];
+        parsed = [
+          {
+            name: "Suggested Registration",
+            stops: content.substring(0, 200),
+            description: "Raw suggestion from LLM",
+          },
+        ];
       }
       setSuggestions(Array.isArray(parsed) ? parsed : []);
     } catch (e) {
@@ -62,12 +69,20 @@ export default function RegistrationAssistant() {
       </div>
 
       <p className="text-sm text-zinc-400">
-        Ask for registration suggestions for any piece, composer, style, or organ. The AI will suggest stop combinations based on historical practice and organ tradition.
+        Ask for registration suggestions for any piece, composer, style, or organ. The AI will
+        suggest stop combinations based on historical practice and organ tradition.
       </p>
 
       <div className="flex flex-wrap gap-2">
-        {SUGGESTION_PROMPTS.slice(0, 4).map((sp, i) => (
-          <button key={i} onClick={() => { setPrompt(sp); handleSuggest(sp); }} className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs hover:bg-zinc-700 hover:text-zinc-100 transition-colors">
+        {SUGGESTION_PROMPTS.slice(0, 4).map((sp) => (
+          <button
+            key={sp}
+            onClick={() => {
+              setPrompt(sp);
+              handleSuggest(sp);
+            }}
+            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
+          >
             {sp.substring(0, 50)}...
           </button>
         ))}
@@ -76,8 +91,8 @@ export default function RegistrationAssistant() {
       <div className="flex gap-2">
         <input
           value={prompt}
-          onChange={e => setPrompt(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleSuggest()}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSuggest()}
           placeholder="e.g., Suggest a plenum for Bach's Toccata in F on a Silbermann organ..."
           className="flex-1 bg-zinc-900 text-zinc-100 border border-zinc-700 rounded-lg px-4 py-3 text-sm"
         />
@@ -90,12 +105,19 @@ export default function RegistrationAssistant() {
         </button>
       </div>
 
-      {error && <div className="bg-red-950/40 border border-red-800 text-red-300 px-4 py-2 rounded text-sm">{error}</div>}
+      {error && (
+        <div className="bg-red-950/40 border border-red-800 text-red-300 px-4 py-2 rounded text-sm">
+          {error}
+        </div>
+      )}
 
       {suggestions.length > 0 && (
         <div className="grid gap-4">
-          {suggestions.map((s, i) => (
-            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          {suggestions.map((s) => (
+            <div
+              key={`${s.name}-${s.stops}`}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg p-4"
+            >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium text-amber-400">{s.name}</h3>
               </div>

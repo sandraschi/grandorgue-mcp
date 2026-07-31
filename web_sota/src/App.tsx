@@ -1,22 +1,22 @@
 import { Route, Routes } from "react-router-dom";
-import { useZoom } from "./hooks/useZoom";
 import AudioMixer from "./components/AudioMixer";
 import CombinationMemory from "./components/CombinationMemory";
 import Dashboard from "./components/Dashboard";
-import PracticeStudio from "./components/PracticeStudio";
-import RegistrationAssistant from "./components/RegistrationAssistant";
+import FloatingChat from "./components/FloatingChat";
 import Marketplace from "./components/Marketplace";
 import MidiDepot from "./components/MidiDepot";
 import MidiPlayer from "./components/MidiPlayer";
 import OrganBrowser from "./components/OrganBrowser";
 import OrganConsole from "./components/OrganConsole";
 import OrganVisualizer from "./components/OrganVisualizer";
+import PracticeStudio from "./components/PracticeStudio";
 import RecordPanel from "./components/RecordPanel";
+import RegistrationAssistant from "./components/RegistrationAssistant";
 import RegistrationManager from "./components/RegistrationManager";
 import Settings from "./components/Settings";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
-import FloatingChat from "./components/FloatingChat";
+import { useZoom } from "./hooks/useZoom";
 
 export default function App() {
   useZoom();

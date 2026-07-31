@@ -1,5 +1,15 @@
 import { AlphaTabApi, PlayerOutputMode } from "@coderline/alphatab";
-import { Church, FileDown, ListMusic, Music, Music2, Play, Search, SkipBack, Square } from "lucide-react";
+import {
+  Church,
+  FileDown,
+  ListMusic,
+  Music,
+  Music2,
+  Play,
+  Search,
+  SkipBack,
+  Square,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/api/client";
 

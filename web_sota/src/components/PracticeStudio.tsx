@@ -1,4 +1,4 @@
-import { Pause, Play, RotateCcw, SkipBack, SkipForward } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface MidiFile {
@@ -25,7 +25,9 @@ export default function PracticeStudio() {
     } catch {}
   }, []);
 
-  useEffect(() => { loadFiles(); }, [loadFiles]);
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles]);
 
   const pollPlayback = useCallback(async () => {
     try {
@@ -57,7 +59,9 @@ export default function PracticeStudio() {
       } else {
         setError(d.message || "Playback failed");
       }
-    } catch (e) { setError(String(e)); }
+    } catch (e) {
+      setError(String(e));
+    }
   };
 
   const handleStop = async () => {
@@ -74,7 +78,11 @@ export default function PracticeStudio() {
       const r = await fetch("/api/organs/last");
       const d = await r.json();
       if (d?.organ) {
-        await fetch("/api/go/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+        await fetch("/api/go/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
       }
     } catch {}
     setError(null);
@@ -87,7 +95,9 @@ export default function PracticeStudio() {
       const d = await r.json();
       if (d.success) setStatus("Playing through GrandOrgue");
       else setError(d.message);
-    } catch (e) { setError(String(e)); }
+    } catch (e) {
+      setError(String(e));
+    }
   };
 
   const handleBachBundle = async () => {
@@ -98,30 +108,43 @@ export default function PracticeStudio() {
       const d = await r.json();
       setStatus(`Downloaded ${d.count} Bach MIDI files`);
       await loadFiles();
-    } catch (e) { setError(String(e)); }
+    } catch (e) {
+      setError(String(e));
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-serif text-amber-500">Bach Practice Studio</h1>
-      <p className="text-sm text-zinc-400">Practice J.S. Bach organ works with speed control, looping, and MIDI playback through GrandOrgue.</p>
+      <p className="text-sm text-zinc-400">
+        Practice J.S. Bach organ works with speed control, looping, and MIDI playback through
+        GrandOrgue.
+      </p>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label className="text-xs text-zinc-500 mb-1 block">Select MIDI file</label>
+            <label htmlFor="midi-file-select" className="text-xs text-zinc-500 mb-1 block">
+              Select MIDI file
+            </label>
             <select
+              id="midi-file-select"
               value={selectedFile}
-              onChange={e => setSelectedFile(e.target.value)}
+              onChange={(e) => setSelectedFile(e.target.value)}
               className="w-full bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-3 py-2 text-sm"
             >
               <option value="">-- Choose a file --</option>
-              {files.map(f => (
-                <option key={f.name} value={f.name}>{f.name}</option>
+              {files.map((f) => (
+                <option key={f.name} value={f.name}>
+                  {f.name}
+                </option>
               ))}
             </select>
           </div>
-          <button onClick={handleBachBundle} className="px-3 py-2 bg-zinc-800 text-amber-400 rounded text-xs hover:bg-zinc-700 border border-zinc-700">
+          <button
+            onClick={handleBachBundle}
+            className="px-3 py-2 bg-zinc-800 text-amber-400 rounded text-xs hover:bg-zinc-700 border border-zinc-700"
+          >
             Download Bach Bundle (176 files)
           </button>
         </div>
@@ -130,9 +153,25 @@ export default function PracticeStudio() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <button onClick={handlePlay} disabled={!selectedFile || playing} className="p-2.5 bg-green-900 text-green-300 rounded-lg hover:bg-green-800 disabled:opacity-30"><Play size={18} /></button>
-            <button onClick={handleStop} disabled={!playing} className="p-2.5 bg-red-900 text-red-300 rounded-lg hover:bg-red-800 disabled:opacity-30"><Pause size={18} /></button>
-            <button onClick={handlePlayGo} disabled={!selectedFile} className="px-3 py-2 bg-amber-900 text-amber-300 rounded-lg text-xs hover:bg-amber-800 disabled:opacity-30">
+            <button
+              onClick={handlePlay}
+              disabled={!selectedFile || playing}
+              className="p-2.5 bg-green-900 text-green-300 rounded-lg hover:bg-green-800 disabled:opacity-30"
+            >
+              <Play size={18} />
+            </button>
+            <button
+              onClick={handleStop}
+              disabled={!playing}
+              className="p-2.5 bg-red-900 text-red-300 rounded-lg hover:bg-red-800 disabled:opacity-30"
+            >
+              <Pause size={18} />
+            </button>
+            <button
+              onClick={handlePlayGo}
+              disabled={!selectedFile}
+              className="px-3 py-2 bg-amber-900 text-amber-300 rounded-lg text-xs hover:bg-amber-800 disabled:opacity-30"
+            >
               Play in GrandOrgue
             </button>
           </div>
@@ -141,16 +180,28 @@ export default function PracticeStudio() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs text-zinc-500">Speed</label>
+            <label htmlFor="playback-speed" className="text-xs text-zinc-500">
+              Speed
+            </label>
             <span className="text-xs font-mono text-zinc-400">{speed}%</span>
           </div>
           <input
-            type="range" min={25} max={200} step={5} value={speed}
-            onChange={e => setSpeed(parseInt(e.target.value))}
+            id="playback-speed"
+            type="range"
+            min={25}
+            max={200}
+            step={5}
+            value={speed}
+            onChange={(e) => setSpeed(parseInt(e.target.value, 10))}
             className="w-full accent-amber-500"
           />
           <div className="flex justify-between text-[10px] text-zinc-600">
-            <span>25%</span><span>50%</span><span>75%</span><span>100%</span><span>150%</span><span>200%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+            <span>150%</span>
+            <span>200%</span>
           </div>
         </div>
 
@@ -158,16 +209,16 @@ export default function PracticeStudio() {
           <div className="flex items-center gap-3">
             <span className="text-xs text-zinc-500">Loop Section</span>
             <button
-              onClick={() => setLoopStart(prev => prev !== null ? null : 0)}
-              className={`px-2 py-1 rounded text-xs ${loopStart !== null ? 'bg-amber-900 text-amber-300' : 'bg-zinc-800 text-zinc-400'}`}
+              onClick={() => setLoopStart((prev) => (prev !== null ? null : 0))}
+              className={`px-2 py-1 rounded text-xs ${loopStart !== null ? "bg-amber-900 text-amber-300" : "bg-zinc-800 text-zinc-400"}`}
             >
-              A {loopStart !== null ? `(${loopStart}s)` : ''}
+              A {loopStart !== null ? `(${loopStart}s)` : ""}
             </button>
             <button
-              onClick={() => setLoopEnd(prev => prev !== null ? null : 10)}
-              className={`px-2 py-1 rounded text-xs ${loopEnd !== null ? 'bg-amber-900 text-amber-300' : 'bg-zinc-800 text-zinc-400'}`}
+              onClick={() => setLoopEnd((prev) => (prev !== null ? null : 10))}
+              className={`px-2 py-1 rounded text-xs ${loopEnd !== null ? "bg-amber-900 text-amber-300" : "bg-zinc-800 text-zinc-400"}`}
             >
-              B {loopEnd !== null ? `(${loopEnd}s)` : ''}
+              B {loopEnd !== null ? `(${loopEnd}s)` : ""}
             </button>
             {loopStart !== null && loopEnd !== null && (
               <span className="text-xs text-green-400">Looping A↔B</span>
@@ -183,11 +234,18 @@ export default function PracticeStudio() {
           <li>• Use loop A/B to repeat tricky sections</li>
           <li>• Download the Bach bundle for 176 organ works (BWV 525-771, 801-805)</li>
           <li>• "Play in GrandOrgue" routes MIDI through the pipe organ engine</li>
-          <li>• Browse the <span className="text-zinc-400">Bach Catalog</span> for BWV numbers and work descriptions</li>
+          <li>
+            • Browse the <span className="text-zinc-400">Bach Catalog</span> for BWV numbers and
+            work descriptions
+          </li>
         </ul>
       </div>
 
-      {error && <div className="bg-red-950/40 border border-red-800 text-red-300 px-4 py-2 rounded text-sm">{error}</div>}
+      {error && (
+        <div className="bg-red-950/40 border border-red-800 text-red-300 px-4 py-2 rounded text-sm">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

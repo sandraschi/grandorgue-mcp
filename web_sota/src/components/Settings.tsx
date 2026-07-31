@@ -30,8 +30,9 @@ export default function Settings() {
   };
 
   const llmStore = useLLMStore();
-  const llmDetectedCount = llmStore.providers.filter(p => p.status === "detected").length;
-  const currentModels = llmStore.providers.find(p => p.id === llmStore.selectedProvider)?.models || [];
+  const llmDetectedCount = llmStore.providers.filter((p) => p.status === "detected").length;
+  const currentModels =
+    llmStore.providers.find((p) => p.id === llmStore.selectedProvider)?.models || [];
 
   useEffect(() => {
     llmStore.probeAll();
@@ -173,24 +174,40 @@ export default function Settings() {
       </section>
 
       {/* LLM Provider Section */}
-      <section className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4" data-testid="settings-llm">
+      <section
+        className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4"
+        data-testid="settings-llm"
+      >
         <div className="flex items-center gap-2">
           <Cpu className="text-amber-500" size={18} />
           <h2 className="text-sm font-medium text-zinc-300">Local LLM Provider</h2>
-          <span className={`ml-auto inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] ${llmStore.probing ? 'bg-amber-900/40 text-amber-400' : llmDetectedCount > 0 ? 'bg-green-900/40 text-green-400' : 'bg-zinc-800 text-zinc-500'}`}>
-            {llmStore.probing ? "Probing..." : llmDetectedCount > 0 ? `${llmDetectedCount} detected` : "None detected"}
+          <span
+            className={`ml-auto inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] ${llmStore.probing ? "bg-amber-900/40 text-amber-400" : llmDetectedCount > 0 ? "bg-green-900/40 text-green-400" : "bg-zinc-800 text-zinc-500"}`}
+          >
+            {llmStore.probing
+              ? "Probing..."
+              : llmDetectedCount > 0
+                ? `${llmDetectedCount} detected`
+                : "None detected"}
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           {llmStore.providers.map((p) => (
-            <div key={p.id} className={`rounded-lg border p-3 text-xs ${p.status === "detected" ? "border-green-700 bg-green-950/20" : p.status === "probing" ? "border-amber-700 bg-amber-950/10" : "border-zinc-700 bg-zinc-950/40"}`}>
+            <div
+              key={p.id}
+              className={`rounded-lg border p-3 text-xs ${p.status === "detected" ? "border-green-700 bg-green-950/20" : p.status === "probing" ? "border-amber-700 bg-amber-950/10" : "border-zinc-700 bg-zinc-950/40"}`}
+            >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-zinc-300 font-medium">{p.label}</span>
-                <span className={`w-2 h-2 rounded-full ${p.status === "detected" ? "bg-green-500" : p.status === "probing" ? "bg-amber-500 animate-pulse" : "bg-zinc-600"}`} />
+                <span
+                  className={`w-2 h-2 rounded-full ${p.status === "detected" ? "bg-green-500" : p.status === "probing" ? "bg-amber-500 animate-pulse" : "bg-zinc-600"}`}
+                />
               </div>
               <div className="text-zinc-500">:{p.base_url.split(":")[2] || "?"}</div>
-              {p.status === "detected" && <div className="text-green-600 mt-1">{p.models.length} models</div>}
+              {p.status === "detected" && (
+                <div className="text-green-600 mt-1">{p.models.length} models</div>
+              )}
             </div>
           ))}
         </div>
@@ -204,11 +221,17 @@ export default function Settings() {
               className="w-full bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-3 py-2 text-sm"
               data-testid="llm-provider-select"
             >
-              {llmStore.providers.filter(p => p.status === "detected").map(p => (
-                <option key={p.id} value={p.id}>{p.label}</option>
-              ))}
-              {llmStore.providers.every(p => p.status !== "detected") && (
-                <option value="" disabled>No provider detected</option>
+              {llmStore.providers
+                .filter((p) => p.status === "detected")
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              {llmStore.providers.every((p) => p.status !== "detected") && (
+                <option value="" disabled>
+                  No provider detected
+                </option>
               )}
             </select>
           </label>
@@ -220,8 +243,16 @@ export default function Settings() {
               className="w-full bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-3 py-2 text-sm"
               data-testid="llm-model-select"
             >
-              {currentModels.map(m => <option key={m} value={m}>{m}</option>)}
-              {currentModels.length === 0 && <option value="" disabled>No models found</option>}
+              {currentModels.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+              {currentModels.length === 0 && (
+                <option value="" disabled>
+                  No models found
+                </option>
+              )}
             </select>
           </label>
         </div>
@@ -231,18 +262,25 @@ export default function Settings() {
           disabled={llmStore.probing}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-xs hover:bg-zinc-700 disabled:opacity-40"
         >
-          <RefreshCw size={12} className={llmStore.probing ? "animate-spin" : ""} /> Re-detect Providers
+          <RefreshCw size={12} className={llmStore.probing ? "animate-spin" : ""} /> Re-detect
+          Providers
         </button>
 
         {llmStore.gpuDetected === true && llmDetectedCount === 0 && (
           <div className="rounded border border-amber-800 bg-amber-950/30 px-3 py-2 text-xs text-amber-400">
-            High-performance GPU detected but no local LLM running. Install Ollama or LM Studio to enable AI features for free.
+            High-performance GPU detected but no local LLM running. Install Ollama or LM Studio to
+            enable AI features for free.
           </div>
         )}
 
         <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-[10px] text-zinc-600 font-mono">
-          <div>GPU detected: {llmStore.gpuDetected === null ? "checking..." : llmStore.gpuDetected ? "Yes" : "No"}</div>
-          <div>Chat provider: {llmStore.selectedProvider} · Model: {llmStore.selectedModel || "(none)"}</div>
+          <div>
+            GPU detected:{" "}
+            {llmStore.gpuDetected === null ? "checking..." : llmStore.gpuDetected ? "Yes" : "No"}
+          </div>
+          <div>
+            Chat provider: {llmStore.selectedProvider} · Model: {llmStore.selectedModel || "(none)"}
+          </div>
         </div>
       </section>
 

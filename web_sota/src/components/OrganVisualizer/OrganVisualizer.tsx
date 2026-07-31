@@ -16,7 +16,13 @@ interface StopState {
 const MANUAL_PIPES = { Great: 32, Swell: 24, Pedal: 20, Choir: 16 };
 const PIPE_COLORS = { off: "#1e293b", on: "#f59e0b", fading: "#78350f" };
 
-function drawFacade(ctx: CanvasRenderingContext2D, width: number, height: number, pipes: PipeState[], stops: StopState[]) {
+function drawFacade(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  pipes: PipeState[],
+  stops: StopState[],
+) {
   ctx.clearRect(0, 0, width, height);
 
   ctx.fillStyle = "#0f0f12";
@@ -66,7 +72,7 @@ function drawFacade(ctx: CanvasRenderingContext2D, width: number, height: number
   ctx.fillRect(0, railY, width, 48);
 
   stops.slice(0, 16).forEach((stop, i) => {
-    const sx = 8 + i * (width - 16) / 16;
+    const sx = 8 + (i * (width - 16)) / 16;
     ctx.fillStyle = stop.active ? "#f59e0b" : "#3f3f46";
     ctx.fillRect(sx, railY + 6, (width - 16) / 16 - 4, 6);
     ctx.fillStyle = stop.active ? "#fbbf24" : "#52525b";
@@ -85,7 +91,10 @@ export default function OrganVisualizer() {
   const totalPipes = Object.values(MANUAL_PIPES).reduce((a, b) => a + b, 0);
   if (pipesRef.current.length === 0) {
     pipesRef.current = Array.from({ length: totalPipes }, (_, i) => ({
-      index: i, active: false, velocity: 0, decay: 0
+      index: i,
+      active: false,
+      velocity: 0,
+      decay: 0,
     }));
   }
 
@@ -99,29 +108,43 @@ export default function OrganVisualizer() {
             const msg = JSON.parse(e.data);
             if (msg.type === "note") {
               const pipe = pipesRef.current[msg.note % totalPipes];
-              if (pipe) { pipe.active = true; pipe.velocity = (msg.velocity || 64) / 127; pipe.decay = 1; }
+              if (pipe) {
+                pipe.active = true;
+                pipe.velocity = (msg.velocity || 64) / 127;
+                pipe.decay = 1;
+              }
               for (let d = -2; d <= 2; d++) {
                 const nearby = pipesRef.current[(msg.note + d) % totalPipes];
-                if (nearby && !nearby.active) { nearby.active = true; nearby.decay = 0.3 + Math.random() * 0.3; }
+                if (nearby && !nearby.active) {
+                  nearby.active = true;
+                  nearby.decay = 0.3 + Math.random() * 0.3;
+                }
               }
             } else if (msg.type === "note_off") {
               const pipe = pipesRef.current[msg.note % totalPipes];
               if (pipe) pipe.active = false;
             } else if (msg.type === "stop") {
-              const existing = stopsRef.current.find(s => s.cc === msg.cc);
+              const existing = stopsRef.current.find((s) => s.cc === msg.cc);
               if (existing) existing.active = msg.state;
               else stopsRef.current.push({ cc: msg.cc, name: `Stop ${msg.cc}`, active: msg.state });
             } else if (msg.type === "panic") {
-              pipesRef.current.forEach(p => { p.active = false; p.decay = 0; });
+              pipesRef.current.forEach((p) => {
+                p.active = false;
+                p.decay = 0;
+              });
             }
           } catch {}
         };
-        ws.onclose = () => { setTimeout(connect, 3000); };
+        ws.onclose = () => {
+          setTimeout(connect, 3000);
+        };
         wsRef.current = ws;
       } catch {}
     };
     connect();
-    return () => { wsRef.current?.close(); };
+    return () => {
+      wsRef.current?.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -131,7 +154,7 @@ export default function OrganVisualizer() {
     if (!ctx) return;
 
     const loop = () => {
-      pipesRef.current.forEach(p => {
+      pipesRef.current.forEach((p) => {
         if (!p.active && p.decay > 0) p.decay = Math.max(0, p.decay - 0.02);
       });
       drawFacade(ctx, canvas.width, canvas.height, pipesRef.current, stopsRef.current);
@@ -143,12 +166,7 @@ export default function OrganVisualizer() {
 
   return (
     <div className="w-full rounded-lg overflow-hidden border border-zinc-800">
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={400}
-        className="w-full h-auto"
-      />
+      <canvas ref={canvasRef} width={800} height={400} className="w-full h-auto" />
       <div className="bg-zinc-950 px-3 py-1.5 text-[10px] text-zinc-600 flex gap-4">
         <span>Great · Swell · Pedal · Choir</span>
         <span className="text-zinc-700">|</span>

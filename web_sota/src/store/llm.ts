@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 interface ProviderInfo {
   id: string;
@@ -58,7 +58,9 @@ export const useLLMStore = create<LLMState>()(
           const cfg = PROVIDERS_CONFIG.find((c) => c.id === p.id);
           if (!cfg) continue;
           try {
-            const r = await fetch(`${p.base_url}${cfg.probe}`, { signal: AbortSignal.timeout(3000) });
+            const r = await fetch(`${p.base_url}${cfg.probe}`, {
+              signal: AbortSignal.timeout(3000),
+            });
             if (r.ok) {
               const data = await r.json();
               p.status = "detected" as const;
@@ -96,7 +98,11 @@ export const useLLMStore = create<LLMState>()(
       }),
       merge: (persisted: unknown, current: LLMState) => {
         const p = persisted as Partial<LLMPersist>;
-        return { ...current, selectedProvider: p.selectedProvider ?? current.selectedProvider, selectedModel: p.selectedModel ?? current.selectedModel };
+        return {
+          ...current,
+          selectedProvider: p.selectedProvider ?? current.selectedProvider,
+          selectedModel: p.selectedModel ?? current.selectedModel,
+        };
       },
     },
   ),

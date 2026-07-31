@@ -3,7 +3,6 @@ import {
   Circle,
   Disc,
   Layers,
-  Sparkles,
   Library,
   Monitor,
   Music,
@@ -11,6 +10,7 @@ import {
   Radio,
   Settings,
   ShoppingBag,
+  Sparkles,
   Volume2,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";

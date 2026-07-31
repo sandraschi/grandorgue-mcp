@@ -92,10 +92,15 @@ export default function Dashboard() {
       <h1 className="text-2xl font-serif text-organ-gold">Dashboard</h1>
 
       {!backendOnline && (
-        <div data-testid="backend-dot" className="rounded-lg border border-red-800 bg-red-950/40 px-4 py-3 text-sm text-red-300">
+        <div
+          data-testid="backend-dot"
+          className="rounded-lg border border-red-800 bg-red-950/40 px-4 py-3 text-sm text-red-300"
+        >
           <div className="flex items-center justify-between">
-            <span>Backend offline. Run <code className="text-red-200">uv run grandorgue-mcp</code> or{" "}
-              <code className="text-red-200">.\start.ps1</code> from the repo root.</span>
+            <span>
+              Backend offline. Run <code className="text-red-200">uv run grandorgue-mcp</code> or{" "}
+              <code className="text-red-200">.\start.ps1</code> from the repo root.
+            </span>
             <button
               data-testid="backend-restart"
               onClick={refresh}
@@ -223,7 +228,10 @@ export default function Dashboard() {
 
 function Card({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
   return (
-    <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800" data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, '-')}`}>
+    <div
+      className="bg-zinc-900 rounded-lg p-4 border border-zinc-800"
+      data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, "-")}`}
+    >
       <div className="text-xs text-zinc-500 mb-1">{label}</div>
       <div className={`text-sm font-medium ${ok ? "text-green-400" : "text-zinc-400"}`}>
         {value}
