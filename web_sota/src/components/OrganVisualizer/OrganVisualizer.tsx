@@ -102,7 +102,6 @@ export default function OrganVisualizer() {
     const connect = () => {
       try {
         const ws = new WebSocket("ws://127.0.0.1:11010/ws");
-        ws.onopen = () => console.log("[Visualizer] WebSocket connected");
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data);

@@ -8,7 +8,7 @@ $name = if ($proj -match '(?m)^name = "(.*)"') { $matches[1] } else { Split-Path
 $ver = if ($proj -match '(?m)^version = "(.*)"') { $matches[1] } else { "0.0.0" }
 
 # Stage: canonical src + run_server.py + root pyproject/uv.lock + mcpb assets.
-# mcpb/ holds ONLY manifest.json and assets — never a second copy of the code.
+# mcpb/ holds ONLY manifest.json and assets - never a second copy of the code.
 $stage = Join-Path $RepoRoot "dist\mcpb-stage"
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
