@@ -1,11 +1,11 @@
 """
-GrandOrgue MCP Server — Modern pipe organ control via MIDI bridge.
+GrandOrgue MCP Server - Modern pipe organ control via MIDI bridge.
 
 FastMCP 3.4+ tools + FastAPI REST + WebSocket real-time state.
 
 Transports:
 - stdio (default): Claude Desktop / mcpb bundle. `uv run grandorgue-mcp`
-- HTTP: set MCP_TRANSPORT=http — serves REST on port 11010, MCP at /mcp,
+- HTTP: set MCP_TRANSPORT=http - serves REST on port 11010, MCP at /mcp,
   WebSocket at /ws. Used by the webapp (frontend on 11011 via Vite proxy).
 """
 
@@ -117,7 +117,7 @@ async def _notify_status() -> None:
 
 # -- Shared implementations (called by both MCP tools and REST) ------------
 # NOTE: @mcp.tool() replaces the function with a FunctionTool object which is
-# NOT directly callable. Never call a decorated tool from other code — call
+# NOT directly callable. Never call a decorated tool from other code - call
 # these plain helpers instead.
 
 
@@ -370,7 +370,7 @@ async def go_play_note(
     duration_ms: int = 500,
 ) -> dict[str, Any]:
     """Play a MIDI note through GrandOrgue. The note-off is scheduled in the
-    background — the tool returns immediately.
+    background - the tool returns immediately.
 
     ## Return Format
     {"success": bool, "note": int, "velocity": int, "channel": int}
@@ -393,7 +393,7 @@ async def go_play_chord(
     duration_ms: int = 800,
 ) -> dict[str, Any]:
     """Play a chord (multiple notes simultaneously). Defaults to C major.
-    The release is scheduled in the background — the tool returns immediately.
+    The release is scheduled in the background - the tool returns immediately.
 
     ## Return Format
     {"success": bool, "notes": [...], "velocity": int}
@@ -1308,7 +1308,7 @@ async def api_skills() -> JSONResponse:
         content=[
             {
                 "name": "GrandOrgue",
-                "description": "Pipe organ console assistant — organ control, MIDI, registrations, Bach repertoire",
+                "description": "Pipe organ console assistant - organ control, MIDI, registrations, Bach repertoire",
             }
         ]
     )
@@ -1459,6 +1459,8 @@ app.mount("/mcp", mcp_app)
 
 def main() -> None:
     transport = _os.getenv("MCP_TRANSPORT", "stdio").lower()
+    if _os.environ.get("GRANDORGUE_TAURI", "").lower() in ("1", "true", "yes"):
+        transport = "http"
     if transport == "http":
         import uvicorn
 
