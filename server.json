@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.sandraschi/grandorgue-mcp",
-  "description": "GrandOrgue pipe organ simulator MCP server - MIDI bridge, organ control, sample set management, m...",
+  "description": "Control GrandOrgue pipe organ: MIDI bridge, stops, pistons, manuals, sample sets",
   "version": "0.3.0",
   "repository": {
     "url": "https://github.com/sandraschi/grandorgue-mcp",

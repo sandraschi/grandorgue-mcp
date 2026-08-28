@@ -1,7 +1,7 @@
 [project]
 name = "grandorgue-mcp"
 version = "0.3.0"
-description = "GrandOrgue pipe organ simulator MCP server â€” MIDI bridge, organ control, sample set management, modern web console"
+description = "Control GrandOrgue pipe organ: MIDI bridge, stops, pistons, manuals, sample sets"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -55,3 +55,9 @@ ignore = ["S101", "S106", "S110", "S112", "S101", "S106", "S110", "S112", "RUF01
 "tests/**/*.py" = ["E501", "S101"]
 "src/grandorgue_mcp/server.py" = ["S603", "S110"]
 "src/grandorgue_mcp/go_process.py" = ["S603", "S110"]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.20.0",
+    "pywin32>=311",
+]
