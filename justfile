@@ -1,6 +1,8 @@
 set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 import 'scripts/just/fleet.just'
 
+REPO := justfile_directory()
+
 default:
     @just --list
 
@@ -14,7 +16,7 @@ run-stdio:
 
 # Build the mcpb bundle (staged from canonical src/)
 mcpb:
-    powershell.exe -NoProfile -File scripts/mcpb-pack.ps1
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\make-mcpb.ps1" -RepoPath "{{REPO}}"
 
 # Lint and format Python
 lint check:
@@ -41,7 +43,7 @@ install:
 
 # Install frontend deps
 install-web:
-    cd web_sota && npm install
+    cd web_sota; npm install
 
 # Launch full webapp (backend + frontend, opens browser)
 web start:
@@ -53,9 +55,7 @@ icons:
 
 # Build Tauri native desktop app (full release pipeline)
 build-native:
-    Set-Location '{{justfile_directory()}}\native'
-    $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
-    .\build.ps1
+    Set-Location '{{justfile_directory()}}\native'; $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"; .\build.ps1
 
 # Build Tauri native app (debug, skip PyInstaller)
 build-native-debug:
