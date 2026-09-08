@@ -17,7 +17,15 @@ import RegistrationManager from "./components/RegistrationManager";
 import Settings from "./components/Settings";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+import { LoggerProvider } from "./context/LoggerContext";
 import { useZoom } from "./hooks/useZoom";
+import { AppsPage } from "./pages/apps";
+import { ChatPage } from "./pages/ChatPage";
+import { HelpPage } from "./pages/HelpPage";
+import { InboxPage } from "./pages/InboxPage";
+import { LogsPage } from "./pages/LogsPage";
+import { SkillsPage } from "./pages/SkillsPage";
+import { ToolsPage } from "./pages/ToolsPage";
 
 export default function App() {
   useZoom();
@@ -41,30 +49,39 @@ export default function App() {
   }, []);
   void tauriBackend;
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Topbar />
-        <main className="flex-1 overflow-y-auto p-4">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/console" element={<OrganConsole />} />
-            <Route path="/library" element={<OrganBrowser />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/combinations" element={<CombinationMemory />} />
-            <Route path="/record" element={<RecordPanel />} />
-            <Route path="/registrations" element={<RegistrationManager />} />
-            <Route path="/midi-depot" element={<MidiDepot />} />
-            <Route path="/midi-player" element={<MidiPlayer />} />
-            <Route path="/assistant" element={<RegistrationAssistant />} />
-            <Route path="/mixer" element={<AudioMixer />} />
-            <Route path="/visualizer" element={<OrganVisualizer />} />
-            <Route path="/practice" element={<PracticeStudio />} />
-            <Route path="/settings" element={<Settings />} />
-          </Routes>
-        </main>
+    <LoggerProvider>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <Topbar />
+          <main className="flex-1 overflow-y-auto p-4">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/console" element={<OrganConsole />} />
+              <Route path="/library" element={<OrganBrowser />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/combinations" element={<CombinationMemory />} />
+              <Route path="/record" element={<RecordPanel />} />
+              <Route path="/registrations" element={<RegistrationManager />} />
+              <Route path="/midi-depot" element={<MidiDepot />} />
+              <Route path="/midi-player" element={<MidiPlayer />} />
+              <Route path="/assistant" element={<RegistrationAssistant />} />
+              <Route path="/mixer" element={<AudioMixer />} />
+              <Route path="/visualizer" element={<OrganVisualizer />} />
+              <Route path="/practice" element={<PracticeStudio />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/apps" element={<AppsPage />} />
+              <Route path="/tools" element={<ToolsPage />} />
+              <Route path="/skills" element={<SkillsPage />} />
+              <Route path="/logs" element={<LogsPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </main>
+        </div>
+        <FloatingChat />
       </div>
-      <FloatingChat />
-    </div>
+    </LoggerProvider>
   );
 }

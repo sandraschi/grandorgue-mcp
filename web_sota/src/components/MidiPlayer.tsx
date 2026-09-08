@@ -116,7 +116,7 @@ export default function MidiPlayer() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4">
+    <div className="max-w-5xl mx-auto space-y-4" data-testid="player-page">
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-serif text-organ-gold">MIDI Player</h1>
         <div className="flex-1" />
@@ -165,14 +165,14 @@ export default function MidiPlayer() {
       </div>
 
       {goError && (
-        <div className="rounded-lg border border-amber-800 bg-amber-950/40 px-4 py-2 text-xs text-amber-200">
+        <div className="rounded-lg border border-amber-800 bg-amber-950/40 px-4 py-2 text-sm text-amber-200">
           {goError}
         </div>
       )}
 
       {files.length > 0 && (
         <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-600 border-b border-zinc-800">
+          <div className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-600 border-b border-zinc-800">
             <ListMusic size={12} /> Load from depot
           </div>
           <div className="p-2">
@@ -197,7 +197,7 @@ export default function MidiPlayer() {
                     key={f.name}
                     onClick={() => loadFile(f.name)}
                     disabled={loading}
-                    className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 text-xs rounded transition-colors disabled:opacity-40 ${
+                    className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 text-sm rounded transition-colors disabled:opacity-40 ${
                       current === f.name
                         ? "bg-organ-gold/20 text-organ-gold"
                         : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
@@ -220,7 +220,7 @@ export default function MidiPlayer() {
           <div className="flex flex-col items-center justify-center min-h-[400px] text-zinc-600">
             <Music2 size={40} className="mb-3 opacity-30" />
             <p className="text-sm">Select a MIDI file to view notation</p>
-            <p className="text-xs mt-1">Files are loaded from the MIDI Depot</p>
+            <p className="text-sm mt-1">Files are loaded from the MIDI Depot</p>
           </div>
         )}
         <div ref={viewportRef} className={current ? "" : "hidden"} />

@@ -2,21 +2,29 @@ import {
   Bookmark,
   Circle,
   Disc,
+  HelpCircle,
+  Inbox,
   Layers,
+  LayoutGrid,
   Library,
+  ListTodo,
+  MessagesSquare,
   Monitor,
   Music,
   Play,
   Radio,
+  ScrollText,
   Settings,
   ShoppingBag,
   Sparkles,
   Volume2,
+  Wrench,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const links = [
   { to: "/", icon: Monitor, label: "Dashboard" },
+  { to: "/inbox", icon: Inbox, label: "Inbox" },
   { to: "/console", icon: Music, label: "Console" },
   { to: "/library", icon: Library, label: "Library" },
   { to: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
@@ -29,6 +37,12 @@ const links = [
   { to: "/assistant", icon: Sparkles, label: "Assistant" },
   { to: "/visualizer", icon: Radio, label: "Visualizer" },
   { to: "/practice", icon: Music, label: "Practice" },
+  { to: "/chat", icon: MessagesSquare, label: "Chat" },
+  { to: "/apps", icon: LayoutGrid, label: "Apps" },
+  { to: "/tools", icon: Wrench, label: "Tools" },
+  { to: "/skills", icon: ListTodo, label: "Skills" },
+  { to: "/logs", icon: ScrollText, label: "Logs" },
+  { to: "/help", icon: HelpCircle, label: "Help" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 

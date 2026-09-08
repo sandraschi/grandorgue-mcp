@@ -84,17 +84,24 @@
     { "name": "api_midi_depot_bach", "description": "api_midi_depot_bach" },
     { "name": "api_llm_providers", "description": "api_llm_providers" },
     { "name": "api_llm_chat", "description": "api_llm_chat" },
+    { "name": "api_logs", "description": "api_logs" },
     { "name": "api_diagnostics", "description": "api_diagnostics" },
     { "name": "api_skills", "description": "api_skills" },
+    { "name": "api_skill_content", "description": "api_skill_content" },
     { "name": "api_capabilities", "description": "api_capabilities" },
     { "name": "api_llm_discover", "description": "api_llm_discover" },
     { "name": "api_llm_models", "description": "api_llm_models" },
+    { "name": "api_llm_install", "description": "api_llm_install" },
+    { "name": "api_llm_install_status", "description": "api_llm_install_status" },
     { "name": "api_llm_onboarding", "description": "api_llm_onboarding" },
     { "name": "api_llm_chat_stream", "description": "api_llm_chat_stream" },
     { "name": "api_registrations_list", "description": "api_registrations_list" },
     { "name": "api_registrations_create", "description": "api_registrations_create" },
     { "name": "api_registrations_update", "description": "api_registrations_update" },
     { "name": "api_registrations_delete", "description": "api_registrations_delete" },
-    { "name": "api_registrations_apply", "description": "api_registrations_apply" }
+    { "name": "api_registrations_apply", "description": "api_registrations_apply" },
+    { "name": "api_apps", "description": "api_apps" },
+    { "name": "api_apps_health", "description": "api_apps_health" },
+    { "name": "api_apps_ensure", "description": "api_apps_ensure" }
   ]
 }

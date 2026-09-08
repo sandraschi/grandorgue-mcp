@@ -63,9 +63,9 @@ certify: gates-green
 install:
     uv sync
 
-# Install frontend deps
+# Install frontend deps (bun — fleet standard)
 install-web:
-    cd web_sota; npm install
+    cd web_sota; bun install
 
 # Launch full webapp (backend + frontend, opens browser)
 web start:

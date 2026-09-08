@@ -102,7 +102,7 @@ cd web_sota && bun run dev
 | Backend | Python 3.12+, FastMCP 3.4, FastAPI, uvicorn |
 | MIDI Bridge | mido + python-rtmidi (virtual ports) |
 | Audio Engine | GrandOrgue C++ (untouched — MIDI control only) |
-| Frontend | React 18, TypeScript, Tailwind CSS, Vite (npm), Zustand, Lucide, react-router-dom |
+| Frontend | React 18, TypeScript, Tailwind CSS, Vite (Bun), Zustand, Lucide, react-router-dom, framer-motion, react-markdown |
 | Linting | Ruff (Python), Biome (TypeScript) |
 | Testing | pytest + Playwright e2e |
 

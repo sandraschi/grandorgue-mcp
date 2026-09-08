@@ -98,7 +98,7 @@ export default function MidiDepot() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="midi-depot-page">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-serif text-organ-gold">MIDI Depot</h1>
         <div className="flex gap-2">
@@ -135,7 +135,7 @@ export default function MidiDepot() {
         <div className="bg-zinc-900 rounded-lg p-8 border border-zinc-800 text-center text-zinc-500">
           <Music size={32} className="mx-auto mb-3 opacity-40" />
           <p>No MIDI files in the depot.</p>
-          <p className="text-xs mt-1">Upload a .mid file to get started.</p>
+          <p className="text-sm mt-1">Upload a .mid file to get started.</p>
         </div>
       ) : (
         <div className="space-y-1">
@@ -146,7 +146,7 @@ export default function MidiDepot() {
             >
               <Music size={16} className="text-zinc-500 shrink-0" />
               <span className="flex-1 text-sm text-zinc-200 truncate">{f.name}</span>
-              <span className="text-xs text-zinc-600 w-16 text-right">
+              <span className="text-sm text-zinc-600 w-16 text-right">
                 {formatSize(f.size_bytes)}
               </span>
               <button

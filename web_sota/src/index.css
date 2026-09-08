@@ -22,7 +22,7 @@
 
 @layer components {
   .stop-tab {
-    @apply relative flex items-center justify-center min-w-10 w-auto max-w-20 px-1 py-2 h-28 rounded-t-lg cursor-pointer transition-all duration-150 select-none font-stop text-xs;
+    @apply relative flex items-center justify-center min-w-10 w-auto max-w-20 px-1 py-2 h-28 rounded-t-lg cursor-pointer transition-all duration-150 select-none font-stop text-sm;
   }
   .stop-tab-label {
     writing-mode: vertical-lr;
@@ -73,4 +73,9 @@ html:not(.dark) video,
 html:not(.dark) canvas,
 html:not(.dark) iframe {
   filter: invert(1) hue-rotate(180deg);
+}
+
+/* Vendored Apps hub token (APPS_PAGE_STANDARD.md). */
+:root {
+  --gh-green: 142 71% 45%;
 }

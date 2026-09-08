@@ -18,7 +18,7 @@ export default function AudioMixer() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6" data-testid="mixer-page">
       <h1 className="text-2xl font-serif text-organ-gold">Audio Mixer</h1>
 
       <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
@@ -28,7 +28,7 @@ export default function AudioMixer() {
 
         {CHANNELS.map((ch) => (
           <div key={ch.cc} className="flex items-center gap-3">
-            <span className="text-xs text-zinc-500 w-16">{ch.name}</span>
+            <span className="text-sm text-zinc-500 w-16">{ch.name}</span>
             <input
               type="range"
               min={0}
@@ -37,13 +37,13 @@ export default function AudioMixer() {
               onChange={(e) => setLevel(ch.cc, +e.target.value)}
               className="flex-1"
             />
-            <span className="text-xs text-zinc-500 w-8 text-right">{levels[ch.cc]}%</span>
+            <span className="text-sm text-zinc-500 w-8 text-right">{levels[ch.cc]}%</span>
           </div>
         ))}
 
         <div className="border-t border-zinc-800 pt-3 mt-3">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-300 font-medium w-16">Master</span>
+            <span className="text-sm text-zinc-300 font-medium w-16">Master</span>
             <input
               type="range"
               min={0}
@@ -52,7 +52,7 @@ export default function AudioMixer() {
               onChange={(e) => setMaster(+e.target.value)}
               className="flex-1"
             />
-            <span className="text-xs text-organ-gold w-8 text-right font-medium">{master}%</span>
+            <span className="text-sm text-organ-gold w-8 text-right font-medium">{master}%</span>
           </div>
         </div>
       </div>

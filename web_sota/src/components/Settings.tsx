@@ -1,6 +1,9 @@
 import { Check, Cpu, RefreshCw, Save, Settings2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ApiError, type AppSettings, api } from "@/api/client";
+import { LlmOnboarding } from "@/components/llm/LlmOnboarding";
+import { LlmProviderCards } from "@/components/llm/LlmProviderCards";
+import type { ProviderInfo } from "@/lib/llm";
 import { useLLMStore } from "@/store/llm";
 
 export default function Settings() {
@@ -36,9 +39,14 @@ export default function Settings() {
 
   useEffect(() => {
     llmStore.probeAll();
-    // Probe GPU
-    fetch("/api/llm/providers")
-      .then(() => llmStore.setGpuDetected(true))
+    // GPU hint comes from the backend discover endpoint (any 200 does NOT
+    // mean a GPU exists — the old code set true on any reachable backend).
+    fetch("/api/llm/discover")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.gpu?.detected === true) llmStore.setGpuDetected(true);
+        else if (d?.gpu?.detected === false) llmStore.setGpuDetected(false);
+      })
       .catch(() => {});
   }, []);
 
@@ -75,7 +83,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6" data-testid="settings-page">
       <div className="flex items-center gap-3">
         <Settings2 className="text-organ-gold" size={24} />
         <h1 className="text-2xl font-serif text-organ-gold">Settings</h1>
@@ -94,7 +102,7 @@ export default function Settings() {
 
       <section className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4">
         <h2 className="text-sm font-medium text-zinc-300">GrandOrgue Executable</h2>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           Path to <code className="text-zinc-400">GrandOrgue.exe</code>. The backend uses this when
           you click Start GrandOrgue on the Dashboard.
         </p>
@@ -108,7 +116,7 @@ export default function Settings() {
           className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 font-mono"
           placeholder="C:\Program Files\GrandOrgue\bin\GrandOrgue.exe"
         />
-        <div className="flex flex-wrap gap-2 text-xs">
+        <div className="flex flex-wrap gap-2 text-sm">
           {settings?.default_go_paths.map((path) => (
             <button
               key={path}
@@ -120,7 +128,7 @@ export default function Settings() {
             </button>
           ))}
         </div>
-        <div className="text-xs text-zinc-500 space-y-1">
+        <div className="text-sm text-zinc-500 space-y-1">
           <div>
             Status:{" "}
             <span className={settings?.go_exe_exists ? "text-green-400" : "text-red-400"}>
@@ -136,12 +144,12 @@ export default function Settings() {
 
       <section className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4">
         <h2 className="text-sm font-medium text-zinc-300">MIDI Bridge Ports</h2>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm text-zinc-500">
           Virtual port names created when you click Connect MIDI. Configure the same names inside
           GrandOrgue.
         </p>
         <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">MCP output port (GrandOrgue MIDI Input)</span>
+          <span className="text-sm text-zinc-500">MCP output port (GrandOrgue MIDI Input)</span>
           <input
             type="text"
             value={midiInputPort}
@@ -154,7 +162,7 @@ export default function Settings() {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-xs text-zinc-500">MCP input port (GrandOrgue MIDI Output)</span>
+          <span className="text-sm text-zinc-500">MCP input port (GrandOrgue MIDI Output)</span>
           <input
             type="text"
             value={midiOutputPort}
@@ -167,13 +175,14 @@ export default function Settings() {
           />
         </label>
         {settings?.midi_connected && (
-          <p className="text-xs text-amber-300">
+          <p className="text-sm text-amber-300">
             Disconnect MIDI on the Dashboard before changing port names.
           </p>
         )}
       </section>
 
       {/* LLM Provider Section */}
+      <LlmOnboarding mode="full" />
       <section
         className="bg-zinc-900 rounded-lg p-5 border border-zinc-800 space-y-4"
         data-testid="settings-llm"
@@ -196,7 +205,7 @@ export default function Settings() {
           {llmStore.providers.map((p) => (
             <div
               key={p.id}
-              className={`rounded-lg border p-3 text-xs ${p.status === "detected" ? "border-green-700 bg-green-950/20" : p.status === "probing" ? "border-amber-700 bg-amber-950/10" : "border-zinc-700 bg-zinc-950/40"}`}
+              className={`rounded-lg border p-3 text-sm ${p.status === "detected" ? "border-green-700 bg-green-950/20" : p.status === "probing" ? "border-amber-700 bg-amber-950/10" : "border-zinc-700 bg-zinc-950/40"}`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-zinc-300 font-medium">{p.label}</span>
@@ -214,7 +223,7 @@ export default function Settings() {
 
         <div className="grid grid-cols-2 gap-3">
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Provider</span>
+            <span className="text-sm text-zinc-500">Provider</span>
             <select
               value={llmStore.selectedProvider}
               onChange={(e) => llmStore.selectProvider(e.target.value)}
@@ -236,7 +245,7 @@ export default function Settings() {
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">Model</span>
+            <span className="text-sm text-zinc-500">Model</span>
             <select
               value={llmStore.selectedModel}
               onChange={(e) => llmStore.selectModel(e.target.value)}
@@ -260,14 +269,33 @@ export default function Settings() {
         <button
           onClick={() => llmStore.probeAll()}
           disabled={llmStore.probing}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-xs hover:bg-zinc-700 disabled:opacity-40"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-sm hover:bg-zinc-700 disabled:opacity-40"
         >
           <RefreshCw size={12} className={llmStore.probing ? "animate-spin" : ""} /> Re-detect
           Providers
         </button>
 
+        <LlmProviderCards
+          providers={llmStore.providers.map(
+            (p): ProviderInfo => ({
+              id: p.id,
+              label: p.label,
+              kind: "local",
+              base_url: p.base_url,
+              needs_key: false,
+              key_env: null,
+              configured: p.status === "detected",
+              detected: p.status === "detected",
+              models: p.models,
+            }),
+          )}
+          probing={llmStore.probing}
+          selected={llmStore.selectedProvider}
+          onChanged={() => llmStore.probeAll()}
+        />
+
         {llmStore.gpuDetected === true && llmDetectedCount === 0 && (
-          <div className="rounded border border-amber-800 bg-amber-950/30 px-3 py-2 text-xs text-amber-400">
+          <div className="rounded border border-amber-800 bg-amber-950/30 px-3 py-2 text-sm text-amber-400">
             High-performance GPU detected but no local LLM running. Install Ollama or LM Studio to
             enable AI features for free.
           </div>
@@ -309,7 +337,7 @@ export default function Settings() {
           </li>
           <li>Load an organ via File → Load, then play keys from the Console page.</li>
         </ol>
-        <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-500 font-mono space-y-1">
+        <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-sm text-zinc-500 font-mono space-y-1">
           <div>GrandOrgue MIDI config: {settings?.go_config_path}</div>
           <div>MCP settings file: {settings?.config_dir}</div>
         </div>

@@ -86,11 +86,15 @@ Add to \claude_desktop_config.json\:
 - **api_midi_depot_bach**: api_midi_depot_bach
 - **api_llm_providers**: api_llm_providers
 - **api_llm_chat**: api_llm_chat
+- **api_logs**: api_logs
 - **api_diagnostics**: api_diagnostics
 - **api_skills**: api_skills
+- **api_skill_content**: api_skill_content
 - **api_capabilities**: api_capabilities
 - **api_llm_discover**: api_llm_discover
 - **api_llm_models**: api_llm_models
+- **api_llm_install**: api_llm_install
+- **api_llm_install_status**: api_llm_install_status
 - **api_llm_onboarding**: api_llm_onboarding
 - **api_llm_chat_stream**: api_llm_chat_stream
 - **api_registrations_list**: api_registrations_list
@@ -98,6 +102,9 @@ Add to \claude_desktop_config.json\:
 - **api_registrations_update**: api_registrations_update
 - **api_registrations_delete**: api_registrations_delete
 - **api_registrations_apply**: api_registrations_apply
+- **api_apps**: api_apps
+- **api_apps_health**: api_apps_health
+- **api_apps_ensure**: api_apps_ensure
 
 ## Requirements
 

@@ -5,7 +5,7 @@
   "build": {
     "frontendDist": "../web_sota/dist",
     "devUrl": "http://localhost:11011",
-    "beforeDevCommand": "npm --prefix ../web_sota run dev"
+    "beforeDevCommand": "bun --cwd ../web_sota run dev"
   },
   "app": {
     "windows": [
@@ -60,5 +60,3 @@
     }
   }
 }
-
-

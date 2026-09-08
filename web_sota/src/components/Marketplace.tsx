@@ -45,7 +45,7 @@ export default function Marketplace() {
     : all;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6" data-testid="marketplace-page">
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-serif text-organ-gold">Marketplace</h1>
         <div className="flex-1 relative max-w-md">
@@ -96,7 +96,7 @@ export default function Marketplace() {
           {/* Bach Reference */}
           <section className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
             <h2 className="text-sm text-organ-gold mb-2 font-serif">J.S. Bach Organ Works</h2>
-            <p className="text-xs text-zinc-500 mb-3">
+            <p className="text-sm text-zinc-500 mb-3">
               The complete Bach organ repertoire is catalogued in the{" "}
               <a
                 href="https://github.com/sandraschi/grandorgue-mcp/blob/main/docs/BACH_CATALOG.md"
@@ -158,7 +158,7 @@ export default function Marketplace() {
                   className="bg-zinc-900 rounded-lg p-3 border border-zinc-800 hover:border-organ-gold/30 transition-colors block"
                 >
                   <div className="text-sm text-zinc-200">{src.name}</div>
-                  <div className="text-xs text-zinc-500 mt-1">{src.desc}</div>
+                  <div className="text-sm text-zinc-500 mt-1">{src.desc}</div>
                 </a>
               ))}
             </div>
@@ -175,7 +175,7 @@ function OrganCard({ organ }: { organ: SampleSet }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-medium text-zinc-200 truncate">{organ.name}</div>
-          {organ.style && <div className="text-xs text-organ-gold mt-0.5">{organ.style}</div>}
+          {organ.style && <div className="text-sm text-organ-gold mt-0.5">{organ.style}</div>}
           {organ.creator && <div className="text-[10px] text-zinc-500">by {organ.creator}</div>}
         </div>
         {organ.installed ? (
@@ -189,7 +189,7 @@ function OrganCard({ organ }: { organ: SampleSet }) {
         )}
       </div>
 
-      <div className="text-xs text-zinc-600 mt-2 line-clamp-2">{organ.description}</div>
+      <div className="text-sm text-zinc-600 mt-2 line-clamp-2">{organ.description}</div>
 
       <div className="flex items-center gap-3 mt-3 text-[10px] text-zinc-500">
         {organ.manuals > 0 && <span>{organ.manuals} manuals</span>}
@@ -199,7 +199,7 @@ function OrganCard({ organ }: { organ: SampleSet }) {
 
       <div className="flex gap-2 mt-3">
         {organ.installed ? (
-          <button className="flex-1 px-3 py-1 text-xs bg-organ-gold/20 text-organ-gold rounded hover:bg-organ-gold/30 transition-colors">
+          <button className="flex-1 px-3 py-1 text-sm bg-organ-gold/20 text-organ-gold rounded hover:bg-organ-gold/30 transition-colors">
             Load
           </button>
         ) : organ.url ? (
@@ -207,7 +207,7 @@ function OrganCard({ organ }: { organ: SampleSet }) {
             href={organ.url}
             target="_blank"
             rel="noreferrer"
-            className="flex-1 flex items-center justify-center gap-1 px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded hover:bg-zinc-700 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1 px-3 py-1 text-sm bg-zinc-800 text-zinc-400 rounded hover:bg-zinc-700 transition-colors"
           >
             <Download size={12} /> Download
           </a>

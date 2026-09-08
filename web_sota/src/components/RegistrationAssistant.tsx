@@ -62,7 +62,7 @@ export default function RegistrationAssistant() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="assistant-page">
       <div className="flex items-center gap-3">
         <Sparkles className="text-amber-500" size={24} />
         <h1 className="text-2xl font-serif text-amber-500">Registration Assistant</h1>
@@ -81,7 +81,7 @@ export default function RegistrationAssistant() {
               setPrompt(sp);
               handleSuggest(sp);
             }}
-            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-xs hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
+            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg text-sm hover:bg-zinc-700 hover:text-zinc-100 transition-colors"
           >
             {sp.substring(0, 50)}...
           </button>
@@ -121,10 +121,10 @@ export default function RegistrationAssistant() {
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium text-amber-400">{s.name}</h3>
               </div>
-              <div className="bg-zinc-950 rounded p-3 mb-2 font-mono text-xs text-zinc-300 leading-relaxed">
+              <div className="bg-zinc-950 rounded p-3 mb-2 font-mono text-sm text-zinc-300 leading-relaxed">
                 {s.stops}
               </div>
-              <p className="text-xs text-zinc-500">{s.description}</p>
+              <p className="text-sm text-zinc-500">{s.description}</p>
             </div>
           ))}
         </div>

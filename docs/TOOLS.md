@@ -2,6 +2,12 @@
 
 All tools return `{success, message, ...}`. Full signatures: `docs/MCP_TOOLS.md`.
 
+> Why flat, not portmanteau (assfix 2026-09-08 decision): the 31 `go_*` /
+> `midi_depot_*` names are the published contract (glama.json, llms-full.txt,
+> Claude Desktop integrations). Regrouping would break every existing client
+> for a MEDIUM-severity style gain. Annotations + output schemas now carry the
+> machine-readable grouping instead. Revisit only with a versioned v2 API.
+
 ## Process control
 
 | Tool | Description |

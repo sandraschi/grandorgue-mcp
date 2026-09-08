@@ -96,6 +96,13 @@ GrandOrgue MCP connects GrandOrgue pipe organ simulator to AI agents and a moder
 | POST | /api/llm/chat | LLM chat (backend proxy, keys stay server-side) |
 | POST | /api/llm/chat/stream | Streaming chat proxy (SSE) |
 | GET | /api/skills | Skill listing |
+| GET | /api/skills/grandorgue/content | Skill preprompt text (skill-first chat) |
+| GET | /api/logs | Server log ring buffer (limit/offset/level/search) |
+| GET | /api/apps | Fleet app catalog (236 services, registry-backed) |
+| GET | /api/apps/health | Per-app liveness probe |
+| POST | /api/apps/ensure | Ensure/start a fleet app |
+| POST | /api/llm/install | One-click local engine install (allowlisted) |
+| GET | /api/llm/install/status | Install progress poll |
 | GET | /api/v1/diagnostics | Full diagnostics (CUA smoke) |
 
 MCP prompt: `grandorgue_assistant` (system preprompt for chat).

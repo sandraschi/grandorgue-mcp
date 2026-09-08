@@ -20,6 +20,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=6.0",
     "ruff>=0.16.0,<0.17",
     "playwright>=1.50",
 ]
@@ -41,6 +42,11 @@ minversion = "8.0"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = ["src"]
+addopts = [
+    "--cov=grandorgue_mcp",
+    "--cov-report=term-missing",
+    "--cov-fail-under=30",
+]
 
 [tool.ruff]
 line-length = 120

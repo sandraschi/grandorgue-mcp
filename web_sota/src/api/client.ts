@@ -1,5 +1,28 @@
 const BASE = "/api";
 
+/** Same-origin base (vendored pages import API_BASE; the Vite proxy makes "" correct). */
+export const API_BASE = "";
+
+export async function apiGet<T>(url: string, init?: RequestInit): Promise<T> {
+  const r = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+  if (!r.ok) throw new ApiError(`HTTP ${r.status}`, r.status);
+  return (await r.json().catch(() => ({}))) as T;
+}
+
+export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
+  return apiGet<T>(url, {
+    method: "POST",
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+export async function apiDelete<T>(url: string): Promise<T> {
+  return apiGet<T>(url, { method: "DELETE" });
+}
+
 export interface OrganStatus {
   go_running: boolean;
   go_path: string | null;

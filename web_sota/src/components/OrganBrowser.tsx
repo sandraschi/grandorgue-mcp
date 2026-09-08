@@ -26,7 +26,7 @@ export default function OrganBrowser() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="library-page">
       <h1 className="text-2xl font-serif text-organ-gold">Organ Library</h1>
 
       <section>
@@ -45,11 +45,11 @@ export default function OrganBrowser() {
                 className="bg-zinc-900 rounded-lg p-4 border border-zinc-800 hover:border-organ-gold/30 transition-colors"
               >
                 <div className="font-medium text-zinc-200">{o.name}</div>
-                <div className="text-xs text-zinc-600 mt-1 truncate">{o.path}</div>
+                <div className="text-sm text-zinc-600 mt-1 truncate">{o.path}</div>
                 <button
                   onClick={() => handleLoad(o.name)}
                   disabled={loading === o.name}
-                  className="mt-3 px-3 py-1 text-xs bg-organ-gold/20 text-organ-gold rounded hover:bg-organ-gold/30 disabled:opacity-50"
+                  className="mt-3 px-3 py-1 text-sm bg-organ-gold/20 text-organ-gold rounded hover:bg-organ-gold/30 disabled:opacity-50"
                 >
                   {loading === o.name ? "Loading..." : "Load"}
                 </button>
@@ -67,13 +67,13 @@ export default function OrganBrowser() {
           {catalog.map((c) => (
             <div key={c.name} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
               <div className="font-medium text-zinc-200">{c.name}</div>
-              <div className="text-xs text-zinc-500 mt-1">{c.description}</div>
+              <div className="text-sm text-zinc-500 mt-1">{c.description}</div>
               {c.url && (
                 <a
                   href={c.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-block text-xs text-blue-400 hover:text-blue-300"
+                  className="mt-2 inline-block text-sm text-blue-400 hover:text-blue-300"
                 >
                   Visit website
                 </a>

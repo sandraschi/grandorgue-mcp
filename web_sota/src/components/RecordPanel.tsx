@@ -5,7 +5,7 @@ export default function RecordPanel() {
   const [recording, setRecording] = useState(false);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="record-page">
       <h1 className="text-2xl font-serif text-organ-gold">MIDI Recorder</h1>
 
       <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 space-y-4">
@@ -36,7 +36,7 @@ export default function RecordPanel() {
           )}
         </div>
 
-        <div className="text-xs text-zinc-600">
+        <div className="text-sm text-zinc-600">
           MIDI recording captures all note and stop events. GrandOrgue saves recordings as standard
           MIDI files (.mid). Connect GrandOrgue to the MCP MIDI ports and use the built-in GO
           recorder for full functionality.

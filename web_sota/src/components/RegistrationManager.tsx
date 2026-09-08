@@ -155,19 +155,19 @@ export default function RegistrationManager() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="registrations-page">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-serif text-amber-500">Registration Manager</h1>
         <div className="flex gap-2">
           <button
             onClick={handleExport}
-            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-xs hover:bg-zinc-700 flex items-center gap-1"
+            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-sm hover:bg-zinc-700 flex items-center gap-1"
           >
             <Download size={14} /> Export
           </button>
           <button
             onClick={handleImport}
-            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-xs hover:bg-zinc-700 flex items-center gap-1"
+            className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-sm hover:bg-zinc-700 flex items-center gap-1"
           >
             <Upload size={14} /> Import
           </button>
@@ -214,7 +214,7 @@ export default function RegistrationManager() {
                   n[i] = { ...n[i], cc: parseInt(e.target.value, 10) || 0 };
                   setStops(n);
                 }}
-                className="w-16 bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-2 py-1 text-xs font-mono"
+                className="w-16 bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-2 py-1 text-sm font-mono"
                 placeholder="CC"
               />
               <input
@@ -224,10 +224,10 @@ export default function RegistrationManager() {
                   n[i] = { ...n[i], name: e.target.value };
                   setStops(n);
                 }}
-                className="flex-1 bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-2 py-1 text-xs"
+                className="flex-1 bg-zinc-800 text-zinc-100 border border-zinc-700 rounded px-2 py-1 text-sm"
                 placeholder="Stop name"
               />
-              <label className="flex items-center gap-1 text-xs text-zinc-400">
+              <label className="flex items-center gap-1 text-sm text-zinc-400">
                 <input
                   type="checkbox"
                   checked={s.state}
@@ -252,7 +252,7 @@ export default function RegistrationManager() {
           ))}
           <button
             onClick={addStop}
-            className="text-xs text-amber-500 hover:text-amber-400 flex items-center gap-1"
+            className="text-sm text-amber-500 hover:text-amber-400 flex items-center gap-1"
           >
             <Plus size={12} /> Add stop
           </button>
@@ -275,26 +275,26 @@ export default function RegistrationManager() {
           >
             <div>
               <div className="text-sm text-zinc-200 font-medium">{reg.name}</div>
-              <div className="text-xs text-zinc-500">
+              <div className="text-sm text-zinc-500">
                 {reg.organ || "Any organ"} — {reg.updated}
               </div>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => handleApply(reg.id)}
-                className="px-3 py-1.5 bg-green-900 text-green-300 rounded text-xs hover:bg-green-800"
+                className="px-3 py-1.5 bg-green-900 text-green-300 rounded text-sm hover:bg-green-800"
               >
                 Apply
               </button>
               <button
                 onClick={() => handleEdit(reg)}
-                className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-xs hover:bg-zinc-700"
+                className="px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded text-sm hover:bg-zinc-700"
               >
                 Edit
               </button>
               <button
                 onClick={() => handleDelete(reg.id)}
-                className="px-3 py-1.5 bg-red-900/50 text-red-400 rounded text-xs hover:bg-red-900"
+                className="px-3 py-1.5 bg-red-900/50 text-red-400 rounded text-sm hover:bg-red-900"
               >
                 <Trash2 size={12} />
               </button>

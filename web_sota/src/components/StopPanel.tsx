@@ -18,7 +18,7 @@ export default function StopPanel({ stops, stopState, onToggle }: Props) {
     <div className="flex gap-6 flex-wrap">
       {manuals.map((manual) => (
         <div key={manual} className="bg-zinc-900 rounded-lg p-3 border border-zinc-800">
-          <h3 className="text-xs text-zinc-500 mb-2 font-medium">{manual}</h3>
+          <h3 className="text-sm text-zinc-500 mb-2 font-medium">{manual}</h3>
           <div className="flex gap-2 flex-wrap">
             {stops
               .filter((s) => s.manual === manual)

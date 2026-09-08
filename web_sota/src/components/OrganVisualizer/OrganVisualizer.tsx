@@ -164,7 +164,10 @@ export default function OrganVisualizer() {
   }, []);
 
   return (
-    <div className="w-full rounded-lg overflow-hidden border border-zinc-800">
+    <div
+      className="w-full rounded-lg overflow-hidden border border-zinc-800"
+      data-testid="visualizer-page"
+    >
       <canvas ref={canvasRef} width={800} height={400} className="w-full h-auto" />
       <div className="bg-zinc-950 px-3 py-1.5 text-[10px] text-zinc-600 flex gap-4">
         <span>Great · Swell · Pedal · Choir</span>

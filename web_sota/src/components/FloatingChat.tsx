@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { chatComplete, streamChat } from "@/lib/llm";
 import { useLLMStore } from "@/store/llm";
 
 interface Message {
@@ -89,36 +90,38 @@ export default function FloatingChat() {
   const sendMessage = async (text: string) => {
     setChat((prev) => [...prev, { id: nextMessageId++, role: "user", content: text }]);
     setLoading(true);
+    const sp = PERSONALITIES.find((p) => p.id === personality);
+    const skillSuffix = skillName ? ` [skill: ${skillName}]` : "";
+    const messages = [
+      { role: "system" as const, content: (sp?.prompt ?? "") + skillSuffix },
+      { role: "user" as const, content: text },
+    ];
+    const pushAssistant = (content: string) =>
+      setChat((prev) => [...prev, { id: nextMessageId++, role: "assistant", content }]);
+    // Stream first (live tokens); fall back to the non-streaming proxy.
     try {
-      const sp = PERSONALITIES.find((p) => p.id === personality);
-      const r = await fetch("/api/llm/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: llmStore.selectedProvider,
-          model: llmStore.selectedModel,
-          prompt: text,
-          system: sp?.prompt,
-        }),
+      let received = "";
+      const id = nextMessageId++;
+      setChat((prev) => [...prev, { id, role: "assistant", content: "" }]);
+      await streamChat(llmStore.selectedProvider, llmStore.selectedModel, messages, (chunk) => {
+        received += chunk;
+        const snapshot = received;
+        setChat((prev) => prev.map((m) => (m.id === id ? { ...m, content: snapshot } : m)));
       });
-      const data = await r.json();
-      setChat((prev) => [
-        ...prev,
-        {
-          id: nextMessageId++,
-          role: "assistant",
-          content: data.response || data.error || "No response",
-        },
-      ]);
+      if (!received) {
+        setChat((prev) => prev.map((m) => (m.id === id ? { ...m, content: "No response" } : m)));
+      }
     } catch {
-      setChat((prev) => [
-        ...prev,
-        {
-          id: nextMessageId++,
-          role: "assistant",
-          content: "Request failed. Is the backend running?",
-        },
-      ]);
+      try {
+        const content = await chatComplete(
+          llmStore.selectedProvider,
+          llmStore.selectedModel,
+          messages,
+        );
+        pushAssistant(content || "No response");
+      } catch {
+        pushAssistant("Request failed. Is the backend running?");
+      }
     }
     setLoading(false);
   };
@@ -188,7 +191,7 @@ export default function FloatingChat() {
               )}
               <button
                 onClick={() => setOpen(false)}
-                className="text-slate-500 hover:text-slate-300 text-lg leading-none"
+                className="text-slate-300 hover:text-slate-300 text-lg leading-none"
               >
                 &times;
               </button>
@@ -197,7 +200,7 @@ export default function FloatingChat() {
           <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm" data-testid="chat-messages">
             {chat.length === 0 && (
               <div className="text-center pt-4">
-                <p className="text-slate-500 text-xs mb-3">Ask a question about this simulation.</p>
+                <p className="text-slate-300 text-sm mb-3">Ask a question about this simulation.</p>
                 <div
                   className="flex flex-wrap justify-center gap-1.5"
                   data-testid="example-prompts"
@@ -208,7 +211,7 @@ export default function FloatingChat() {
                       onClick={() => {
                         setInput(ex);
                       }}
-                      className="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[10px] px-2 py-1 rounded-full border border-slate-700 transition-colors"
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-slate-200 text-[10px] px-2 py-1 rounded-full border border-slate-700 transition-colors"
                     >
                       {ex}
                     </button>
@@ -232,7 +235,7 @@ export default function FloatingChat() {
                 </div>
               </div>
             ))}
-            {loading && <div className="text-slate-500 text-xs animate-pulse">Thinking...</div>}
+            {loading && <div className="text-slate-300 text-sm animate-pulse">Thinking...</div>}
             <div ref={bottomRef} />
           </div>
           <div className="border-t border-slate-700 p-3 flex flex-col gap-2">
@@ -258,7 +261,7 @@ export default function FloatingChat() {
               <button
                 onClick={handleExport}
                 disabled={chat.length === 0}
-                className="text-slate-500 hover:text-slate-300 disabled:text-slate-700 text-xs px-1.5 py-1 rounded"
+                className="text-slate-300 hover:text-slate-300 disabled:text-slate-700 text-sm px-1.5 py-1 rounded"
                 title="Export chat"
                 data-testid="chat-export"
               >
@@ -282,7 +285,7 @@ export default function FloatingChat() {
               <button
                 onClick={handleClear}
                 disabled={chat.length === 0}
-                className="text-slate-500 hover:text-slate-300 disabled:text-slate-700 text-xs px-1.5 py-1 rounded"
+                className="text-slate-300 hover:text-slate-300 disabled:text-slate-700 text-sm px-1.5 py-1 rounded"
                 title="Clear chat"
                 data-testid="chat-clear"
               >

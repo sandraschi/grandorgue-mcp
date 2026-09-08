@@ -7,6 +7,7 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 try:
     import mido
@@ -14,8 +15,19 @@ try:
 
     _MIDO_OK = True
 except ImportError:
+    # mido ships no type stubs: bind names as Any so the optional-dependency
+    # pattern type-checks. All uses are guarded by _MIDO_OK / asserts.
     _MIDO_OK = False
-    MidiFile = None  # type: ignore
+    mido: Any = None
+    Message: Any = None
+    MidiFile: Any = None
+
+
+def _make_message(*args: Any, **kwargs: Any) -> Any:
+    """Build a mido Message; single place asserting mido is present."""
+    assert Message is not None, "mido not available"
+    return Message(*args, **kwargs)
+
 
 from grandorgue_mcp.models import MidiDeviceStatus, MidiPortInfo
 
@@ -32,8 +44,8 @@ class MidiBridge:
     def __init__(self, go_output_name: str = "GrandOrgue MCP In", go_input_name: str = "GrandOrgue MCP Out"):
         self._go_output_name = go_output_name
         self._go_input_name = go_input_name
-        self._out_port: mido.ports.BaseOutput | None = None
-        self._in_port: mido.ports.BaseInput | None = None
+        self._out_port: Any | None = None
+        self._in_port: Any | None = None
         self._connected = False
         self._stop_state: dict[str, bool] = {}
         self._active_notes: dict[int, bool] = {}
@@ -72,6 +84,7 @@ class MidiBridge:
     def list_ports(self) -> MidiDeviceStatus:
         if not _MIDO_OK:
             return MidiDeviceStatus()
+        assert mido is not None, "mido not available"
         inputs = []
         outputs = []
         for name in mido.get_input_names():
@@ -89,6 +102,7 @@ class MidiBridge:
         """Open the configured MIDI ports. Blocking - run in a worker thread."""
         if not _MIDO_OK:
             return False
+        assert mido is not None, "mido not available"
         mido.set_backend("mido.backends.rtmidi")
 
         def _resolve_port(name: str, kind: str) -> str | None:
@@ -147,7 +161,7 @@ class MidiBridge:
         self._listen_thread = threading.Thread(target=_listen, daemon=True, name="midi-listener")
         self._listen_thread.start()
 
-    def _handle_incoming(self, msg: Message) -> None:
+    def _handle_incoming(self, msg: Any) -> None:
         with self._lock:
             msg_type = msg.type
             if msg_type == "control_change":
@@ -180,36 +194,36 @@ class MidiBridge:
 
     def play_note(self, channel: int, note: int, velocity: int = 64) -> None:
         if self._out_port and self._connected:
-            self._out_port.send(Message("note_on", channel=channel, note=note, velocity=velocity))
+            self._out_port.send(_make_message("note_on", channel=channel, note=note, velocity=velocity))
 
     def release_note(self, channel: int, note: int) -> None:
         if self._out_port and self._connected:
-            self._out_port.send(Message("note_off", channel=channel, note=note))
+            self._out_port.send(_make_message("note_off", channel=channel, note=note))
 
     def set_stop(self, cc: int, state: bool) -> None:
         if self._out_port and self._connected:
             val = 127 if state else 0
-            self._out_port.send(Message("control_change", control=cc, value=val))
+            self._out_port.send(_make_message("control_change", control=cc, value=val))
             self._stop_state[str(cc)] = state
 
     def set_crescendo(self, value: int) -> None:
         if self._out_port and self._connected:
-            self._out_port.send(Message("control_change", control=CRESCENDO_CC, value=max(0, min(127, value))))
+            self._out_port.send(_make_message("control_change", control=CRESCENDO_CC, value=max(0, min(127, value))))
             self._crescendo = value
 
     def set_enclosure(self, cc: int, value: int) -> None:
         if self._out_port and self._connected:
-            self._out_port.send(Message("control_change", control=cc, value=max(0, min(127, value))))
+            self._out_port.send(_make_message("control_change", control=cc, value=max(0, min(127, value))))
             self._enclosures[str(cc)] = value
 
     def trigger_combination(self, number: int) -> None:
         if self._out_port and self._connected:
-            self._out_port.send(Message("program_change", program=min(127, max(0, number - 1))))
+            self._out_port.send(_make_message("program_change", program=min(127, max(0, number - 1))))
 
     def all_notes_off(self) -> None:
         if self._out_port and self._connected:
             for ch in range(16):
-                self._out_port.send(Message("control_change", channel=ch, control=123, value=0))
+                self._out_port.send(_make_message("control_change", channel=ch, control=123, value=0))
 
     def send_sysex(self, data: bytes) -> None:
         if self._out_port and self._connected:
@@ -219,7 +233,7 @@ class MidiBridge:
                 payload = payload[1:]
             if payload[-1:] == b"\xf7":
                 payload = payload[:-1]
-            self._out_port.send(Message("sysex", data=payload))
+            self._out_port.send(_make_message("sysex", data=payload))
 
     # -- MIDI file playback ---------------------------------------------------
 
@@ -231,6 +245,7 @@ class MidiBridge:
         """
         if not _MIDO_OK:
             return "mido not available"
+        assert MidiFile is not None, "mido not available"
         if not self._connected or not self._out_port:
             return "MIDI bridge not connected"
         path = Path(path)
@@ -245,6 +260,10 @@ class MidiBridge:
 
         self._stop_playback_flag = False
 
+        out = self._out_port
+        if out is None:
+            return "MIDI bridge not connected"
+
         def _play():
             try:
                 mid = MidiFile(str(path))
@@ -252,7 +271,7 @@ class MidiBridge:
                     if self._stop_playback_flag or not self._connected:
                         break
                     if not msg.is_meta:
-                        self._out_port.send(msg)
+                        out.send(msg)
             except Exception:
                 logger.exception("MIDI playback failed: %s", path.name)
             finally:

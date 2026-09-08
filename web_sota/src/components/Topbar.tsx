@@ -67,7 +67,7 @@ export default function Topbar() {
       >
         {light ? <Moon size={14} /> : <Sun size={14} />}
       </button>
-      <div className="flex items-center gap-3 text-xs">
+      <div className="flex items-center gap-3 text-sm">
         {backendOnline ? (
           <span className="flex items-center gap-1 text-green-500">
             <Wifi size={12} /> API

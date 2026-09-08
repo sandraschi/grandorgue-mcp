@@ -1,7 +1,9 @@
 # Fleet pre-commit Biome hook for grandorgue-mcp (web root: web_sota/).
 # Canonical template: mcp-central-docs/templates/pre-commit-biome.ps1
-# Detects the web root (webapp/ canonical, then legacy variants), ensures
-# node_modules, runs npm run biome:ci.
+# DEVIATION: prefers bun (fleet standard, repo lockfile) with npm fallback,
+# because bun is not on PATH in every commit shell (found 2026-09-08: hook
+# failed with "bun not recognized"). Detects the web root (webapp/ canonical,
+# then legacy variants), ensures node_modules, runs biome:ci.
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -21,6 +23,14 @@ if (-not $webRoot) {
 
 Push-Location $webRoot
 try {
+    $useBun = $null -ne (Get-Command bun -ErrorAction SilentlyContinue)
+    if ($useBun) {
+        if (-not (Test-Path "node_modules")) {
+            bun install --silent
+        }
+        bun run biome:ci
+        exit $LASTEXITCODE
+    }
     if (-not (Test-Path "node_modules")) {
         npm ci --silent
         if ($LASTEXITCODE -ne 0) {

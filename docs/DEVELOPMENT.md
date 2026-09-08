@@ -28,10 +28,10 @@ Tool returns are dialogic: `{success, message, ...}`.
 ## Frontend (`web_sota/`)
 
 ```powershell
-just install-web  # npm install
-cd web_sota; npm run dev   # Vite on :11011
+just install-web  # bun install (fleet standard; bun.lock committed)
+cd web_sota; bun run dev   # Vite on :11011
 bunx tsc -b       # typecheck (also `just gates-green`)
-npm run biome:ci  # lint gate (hook: scripts/pre-commit-biome.ps1)
+bun run biome:ci  # lint gate (hook: scripts/pre-commit-biome.ps1)
 ```
 
 State: Zustand `src/store/llm.ts` (providers, model, GPU). The browser never

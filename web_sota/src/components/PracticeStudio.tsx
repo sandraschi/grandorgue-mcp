@@ -114,7 +114,7 @@ export default function PracticeStudio() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" data-testid="practice-page">
       <h1 className="text-2xl font-serif text-amber-500">Bach Practice Studio</h1>
       <p className="text-sm text-zinc-400">
         Practice J.S. Bach organ works with speed control, looping, and MIDI playback through
@@ -124,7 +124,7 @@ export default function PracticeStudio() {
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-3">
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <label htmlFor="midi-file-select" className="text-xs text-zinc-500 mb-1 block">
+            <label htmlFor="midi-file-select" className="text-sm text-zinc-500 mb-1 block">
               Select MIDI file
             </label>
             <select
@@ -143,7 +143,7 @@ export default function PracticeStudio() {
           </div>
           <button
             onClick={handleBachBundle}
-            className="px-3 py-2 bg-zinc-800 text-amber-400 rounded text-xs hover:bg-zinc-700 border border-zinc-700"
+            className="px-3 py-2 bg-zinc-800 text-amber-400 rounded text-sm hover:bg-zinc-700 border border-zinc-700"
           >
             Download Bach Bundle (176 files)
           </button>
@@ -170,20 +170,20 @@ export default function PracticeStudio() {
             <button
               onClick={handlePlayGo}
               disabled={!selectedFile}
-              className="px-3 py-2 bg-amber-900 text-amber-300 rounded-lg text-xs hover:bg-amber-800 disabled:opacity-30"
+              className="px-3 py-2 bg-amber-900 text-amber-300 rounded-lg text-sm hover:bg-amber-800 disabled:opacity-30"
             >
               Play in GrandOrgue
             </button>
           </div>
-          <span className="text-xs text-zinc-500">{status}</span>
+          <span className="text-sm text-zinc-500">{status}</span>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label htmlFor="playback-speed" className="text-xs text-zinc-500">
+            <label htmlFor="playback-speed" className="text-sm text-zinc-500">
               Speed
             </label>
-            <span className="text-xs font-mono text-zinc-400">{speed}%</span>
+            <span className="text-sm font-mono text-zinc-400">{speed}%</span>
           </div>
           <input
             id="playback-speed"
@@ -207,21 +207,21 @@ export default function PracticeStudio() {
 
         <div className="mt-4 pt-4 border-t border-zinc-800">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-500">Loop Section</span>
+            <span className="text-sm text-zinc-500">Loop Section</span>
             <button
               onClick={() => setLoopStart((prev) => (prev !== null ? null : 0))}
-              className={`px-2 py-1 rounded text-xs ${loopStart !== null ? "bg-amber-900 text-amber-300" : "bg-zinc-800 text-zinc-400"}`}
+              className={`px-2 py-1 rounded text-sm ${loopStart !== null ? "bg-amber-900 text-amber-300" : "bg-zinc-800 text-zinc-400"}`}
             >
               A {loopStart !== null ? `(${loopStart}s)` : ""}
             </button>
             <button
               onClick={() => setLoopEnd((prev) => (prev !== null ? null : 10))}
-              className={`px-2 py-1 rounded text-xs ${loopEnd !== null ? "bg-amber-900 text-amber-300" : "bg-zinc-800 text-zinc-400"}`}
+              className={`px-2 py-1 rounded text-sm ${loopEnd !== null ? "bg-amber-900 text-amber-300" : "bg-zinc-800 text-zinc-400"}`}
             >
               B {loopEnd !== null ? `(${loopEnd}s)` : ""}
             </button>
             {loopStart !== null && loopEnd !== null && (
-              <span className="text-xs text-green-400">Looping A↔B</span>
+              <span className="text-sm text-green-400">Looping A↔B</span>
             )}
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function PracticeStudio() {
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
         <h3 className="text-sm text-zinc-300 font-medium mb-2">Practice Tips</h3>
-        <ul className="space-y-1 text-xs text-zinc-500">
+        <ul className="space-y-1 text-sm text-zinc-500">
           <li>• Start at 50-75% speed for difficult passages</li>
           <li>• Use loop A/B to repeat tricky sections</li>
           <li>• Download the Bach bundle for 176 organ works (BWV 525-771, 801-805)</li>

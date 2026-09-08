@@ -1,7 +1,7 @@
-import { AlertTriangle, Link, Play, RotateCcw, Settings, Square, Unlink } from "lucide-react";
+import { AlertTriangle, Link, Play, RotateCcw, Square, Unlink } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
 import { ApiError, api, type MidiPort, type OrganStatus } from "@/api/client";
+import { LlmOnboarding } from "@/components/llm/LlmOnboarding";
 
 // Backend port is owned by fleet-start.config.ps1 / WEBAPP_PORTS.md (11010).
 // Keep it in one constant so the UI never hardcodes port literals (P1).
@@ -102,13 +102,7 @@ export default function Dashboard() {
         Modern console for the GrandOrgue pipe organ simulator: start GrandOrgue, connect MIDI, load
         a sample set, then play from the Console or an AI agent.
       </p>
-      <RouterLink
-        to="/settings"
-        data-testid="onboarding-cue"
-        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors"
-      >
-        <Settings size={16} /> First time here? Set up GrandOrgue + MIDI + local LLM
-      </RouterLink>
+      <LlmOnboarding mode="banner" />
 
       {!backendOnline && (
         <div
@@ -123,7 +117,7 @@ export default function Dashboard() {
             <button
               data-testid="backend-restart"
               onClick={refresh}
-              className="flex items-center gap-1 px-3 py-1 bg-red-800 text-red-200 rounded text-xs hover:bg-red-700 transition-colors"
+              className="flex items-center gap-1 px-3 py-1 bg-red-800 text-red-200 rounded text-sm hover:bg-red-700 transition-colors"
             >
               <RotateCcw size={12} /> Retry
             </button>
@@ -133,6 +127,35 @@ export default function Dashboard() {
       {error && (
         <div className="rounded-lg border border-amber-800 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
           {error}
+        </div>
+      )}
+
+      {!backendOnline && (
+        <div data-testid="mock-kpis">
+          <p className="text-sm text-zinc-500 mb-2">
+            Sample preview — start the backend for live status. All values below are placeholders.
+          </p>
+          <div className="grid grid-cols-4 gap-4">
+            {[
+              ["GrandOrgue", "Running"],
+              ["MIDI Bridge", "Connected"],
+              ["Organ", "Mockminster Abbey"],
+              ["Version", "8.0"],
+            ].map(([label, value]) => (
+              <div
+                key={label}
+                className="bg-zinc-900 rounded-lg p-4 border border-dashed border-amber-700"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-sm text-zinc-500">{label}</div>
+                  <span className="text-[10px] font-bold text-amber-400 border border-amber-700 rounded px-1">
+                    MOCK
+                  </span>
+                </div>
+                <div className="text-sm font-medium text-zinc-500">{value}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -195,7 +218,7 @@ export default function Dashboard() {
         <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs text-zinc-500 mb-1">Last Loaded Organ</div>
+              <div className="text-sm text-zinc-500 mb-1">Last Loaded Organ</div>
               <div className="text-sm font-medium text-organ-gold">{lastOrgan.name}</div>
             </div>
             <button
@@ -215,7 +238,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
             <h3 className="text-sm text-zinc-400 mb-2">MIDI Inputs</h3>
-            <div className="space-y-1 text-xs text-zinc-500 font-mono">
+            <div className="space-y-1 text-sm text-zinc-500 font-mono">
               {ports.inputs.slice(0, 12).map((p) => (
                 <div key={p.name} className="truncate">
                   {p.name}
@@ -228,7 +251,7 @@ export default function Dashboard() {
           </div>
           <div className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
             <h3 className="text-sm text-zinc-400 mb-2">MIDI Outputs</h3>
-            <div className="space-y-1 text-xs text-zinc-500 font-mono">
+            <div className="space-y-1 text-sm text-zinc-500 font-mono">
               {ports.outputs.slice(0, 12).map((p) => (
                 <div key={p.name} className="truncate">
                   {p.name}
@@ -251,7 +274,7 @@ function Card({ label, value, ok }: { label: string; value: string; ok?: boolean
       className="bg-zinc-900 rounded-lg p-4 border border-zinc-800"
       data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, "-")}`}
     >
-      <div className="text-xs text-zinc-500 mb-1">{label}</div>
+      <div className="text-sm text-zinc-500 mb-1">{label}</div>
       <div className={`text-sm font-medium ${ok ? "text-green-400" : "text-zinc-400"}`}>
         {value}
       </div>

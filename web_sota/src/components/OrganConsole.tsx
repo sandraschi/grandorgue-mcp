@@ -46,32 +46,32 @@ export default function OrganConsole() {
   };
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto">
+    <div className="space-y-4 max-w-6xl mx-auto" data-testid="console-page">
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-serif text-organ-gold">Console</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setAllStops(true)}
-            className="px-3 py-1 text-xs bg-green-900 text-green-300 rounded"
+            className="px-3 py-1 text-sm bg-green-900 text-green-300 rounded"
           >
             Tutti
           </button>
           <button
             onClick={() => setAllStops(false)}
-            className="px-3 py-1 text-xs bg-zinc-800 text-zinc-400 rounded"
+            className="px-3 py-1 text-sm bg-zinc-800 text-zinc-400 rounded"
           >
             Clear
           </button>
           <button
             onClick={() => api.panic()}
-            className="px-3 py-1 text-xs bg-red-900 text-red-300 rounded"
+            className="px-3 py-1 text-sm bg-red-900 text-red-300 rounded"
           >
             Panic
           </button>
         </div>
         <div className="flex-1" />
         <div className="flex items-center gap-2">
-          <span className="text-xs text-zinc-500">Crescendo</span>
+          <span className="text-sm text-zinc-500">Crescendo</span>
           <input
             type="range"
             min={0}
@@ -84,7 +84,7 @@ export default function OrganConsole() {
             }}
             className="w-32"
           />
-          <span className="text-xs text-zinc-500 w-8">{crescendo}</span>
+          <span className="text-sm text-zinc-500 w-8">{crescendo}</span>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default function OrganConsole() {
 
       {MANUALS.map((m) => (
         <div key={m.name} className="space-y-1">
-          <div className="text-xs text-zinc-500 font-medium">{m.name}</div>
+          <div className="text-sm text-zinc-500 font-medium">{m.name}</div>
           <ManualKeyboard
             firstNote={m.firstNote}
             noteCount={m.noteCount}

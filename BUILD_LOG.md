@@ -47,3 +47,9 @@ timeout: port 11010 never opened after 30s
 - Pyright baseline: 60 pre-existing errors (anyio `to_thread` stubs, mido
   optional-import unbounds); CI pyright step is advisory (`continue-on-error`)
   until that baseline is fixed. My 4 new-code errors fixed.
+- Tier 2 2026-09-08: pyright 60 -> 26. Fixed all mido unbounds (Any-annotated
+  optional import, `_make_message` helper, port-local capture), the shutdown
+  return-type error, my stream/body errors, and the one missing import (kept
+  the runtime-correct path with a targeted resolver ignore). All 26 remaining
+  are `anyio 4.13 to_thread.run_sync` stub-resolution under pyright 1.1.411 —
+  environmental, needs a fleet-wide anyio/pyright pairing decision.

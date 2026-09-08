@@ -14,7 +14,7 @@
     }
     Frontend = @{
         Kind           = 'vite-npm'
-        PackageManager = 'npm'
+        PackageManager = 'bun'
         PortEnvVar     = 'VITE_PORT'
         ApiTargetEnv   = 'VITE_API_TARGET'
     }
