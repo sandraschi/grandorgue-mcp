@@ -18,6 +18,11 @@ llms-full.txt
 dist/
 build/
 *.mcpb
+*.bak
+*.bak.*
+
+# Data dirs (host-local state, never ship)
+data/
 
 # Non-MCP components (webapp, native, scripts)
 native/

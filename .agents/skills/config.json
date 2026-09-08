@@ -1,0 +1,10 @@
+{
+  "auto_load": true,
+  "skills": [
+    {
+      "name": "grandorgue-mcp",
+      "description": "GrandOrgue pipe organ simulator — MIDI bridge, organ control, Bach repertoire",
+      "entry": "../../.opencode/skills/grandorgue-mcp/SKILL.md"
+    }
+  ]
+}

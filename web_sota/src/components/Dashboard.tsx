@@ -1,6 +1,11 @@
-import { AlertTriangle, Link, Play, RotateCcw, Square, Unlink } from "lucide-react";
+import { AlertTriangle, Link, Play, RotateCcw, Settings, Square, Unlink } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { ApiError, api, type MidiPort, type OrganStatus } from "@/api/client";
+
+// Backend port is owned by fleet-start.config.ps1 / WEBAPP_PORTS.md (11010).
+// Keep it in one constant so the UI never hardcodes port literals (P1).
+const BACKEND_PORT = 11010;
 
 export default function Dashboard() {
   const [status, setStatus] = useState<OrganStatus | null>(null);
@@ -21,7 +26,10 @@ export default function Dashboard() {
     } catch (err) {
       setBackendOnline(false);
       if (err instanceof ApiError) setError(err.message);
-      else setError("Backend unreachable on port 11010. Start it with: uv run grandorgue-mcp");
+      else
+        setError(
+          `Backend unreachable on port ${BACKEND_PORT}. Start it with: uv run grandorgue-mcp`,
+        );
     }
   };
 
@@ -90,6 +98,17 @@ export default function Dashboard() {
   return (
     <div data-testid="dashboard" className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-serif text-organ-gold">Dashboard</h1>
+      <p className="text-sm text-zinc-400">
+        Modern console for the GrandOrgue pipe organ simulator: start GrandOrgue, connect MIDI, load
+        a sample set, then play from the Console or an AI agent.
+      </p>
+      <RouterLink
+        to="/settings"
+        data-testid="onboarding-cue"
+        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition-colors"
+      >
+        <Settings size={16} /> First time here? Set up GrandOrgue + MIDI + local LLM
+      </RouterLink>
 
       {!backendOnline && (
         <div

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import AudioMixer from "./components/AudioMixer";
 import CombinationMemory from "./components/CombinationMemory";
@@ -20,6 +21,25 @@ import { useZoom } from "./hooks/useZoom";
 
 export default function App() {
   useZoom();
+  // Tauri desktop: listen for the backend-status event emitted by backend.rs
+  // (health poll result). Falls back to HTTP polling in the dev browser —
+  // Dashboard already polls /api/status every 3 s, this is only the push path.
+  const [tauriBackend, setTauriBackend] = useState<string | null>(null);
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    (async () => {
+      try {
+        const mod = await import("@tauri-apps/api/event");
+        unlisten = await mod.listen<string>("backend-status", (e) => setTauriBackend(e.payload));
+      } catch {
+        // dev browser: @tauri-apps/api has no host — HTTP polling covers us
+      }
+    })();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+  void tauriBackend;
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />

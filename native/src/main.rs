@@ -3,6 +3,8 @@
 mod backend;
 use backend::{BackendProcess, materialize_backend};
 use std::process::{Command, Stdio};
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 

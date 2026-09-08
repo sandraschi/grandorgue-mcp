@@ -86,7 +86,7 @@ class MidiBridge:
         )
 
     def connect(self) -> bool:
-        """Open the configured MIDI ports. Blocking — run in a worker thread."""
+        """Open the configured MIDI ports. Blocking - run in a worker thread."""
         if not _MIDO_OK:
             return False
         mido.set_backend("mido.backends.rtmidi")
@@ -98,7 +98,7 @@ class MidiBridge:
             matches = [n for n in names if n.startswith(name)]
             return matches[0] if matches else None
 
-        # Connect output (sending MIDI to GrandOrgue) — required
+        # Connect output (sending MIDI to GrandOrgue) - required
         out_name = _resolve_port(self._go_output_name, "output")
         if out_name:
             try:
@@ -106,7 +106,7 @@ class MidiBridge:
             except Exception:
                 self._out_port = None
 
-        # Connect input (receiving MIDI from GrandOrgue) — optional
+        # Connect input (receiving MIDI from GrandOrgue) - optional
         in_name = _resolve_port(self._go_input_name, "input")
         if in_name:
             try:

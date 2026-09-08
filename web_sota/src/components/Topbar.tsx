@@ -58,7 +58,11 @@ export default function Topbar() {
         type="button"
         onClick={toggle}
         className="p-1.5 rounded-md text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
-        title={light ? "Switch to dark (experimental light mode)" : "Switch to light (experimental, ugly)"}
+        title={
+          light
+            ? "Switch to dark (experimental light mode)"
+            : "Switch to light (experimental, ugly)"
+        }
         aria-label="Toggle light mode (experimental)"
       >
         {light ? <Moon size={14} /> : <Sun size={14} />}

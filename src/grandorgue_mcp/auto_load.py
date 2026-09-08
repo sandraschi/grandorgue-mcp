@@ -1,4 +1,4 @@
-"""Auto-load organ in GrandOrgue — UI automation + config persistence.
+"""Auto-load organ in GrandOrgue - UI automation + config persistence.
 
 Two working strategies:
 1. pywinauto-mcp: click File → Load → [organ] → OK via Windows UI automation
@@ -101,7 +101,7 @@ async def play_midi_via_ui(midi_filename: str, midi_dir: str = "") -> dict[str, 
     """Load and play a MIDI file through GrandOrgue's built-in MIDI player.
 
     Uses pywinauto-mcp to click File -> Load MIDI File -> type filename -> Enter.
-    Routes through GO's own pipe organ engine — no MIDI cables needed.
+    Routes through GO's own pipe organ engine - no MIDI cables needed.
 
     Return Format
     {"success": bool, "message": str, "method": "pywinauto"|None}
@@ -130,7 +130,7 @@ async def play_midi_via_ui(midi_filename: str, midi_dir: str = "") -> dict[str, 
             await c.post("/automation/keyboard", json={"operation": "hotkey", "keys": ["alt", "f"]})
             await asyncio.sleep(0.3)
 
-            # 'Load MIDI File' — press M (or navigate down and right)
+            # 'Load MIDI File' - press M (or navigate down and right)
             await c.post("/automation/keyboard", json={"operation": "press", "key": "m"})
             await asyncio.sleep(0.5)
 

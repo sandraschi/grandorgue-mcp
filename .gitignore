@@ -7,10 +7,15 @@ build/
 .ruff_cache/
 .pytest_cache/
 *.bak
+*.bak.*
+*.mcpb
 *.spec
 !grandorgue-mcp-backend.spec
 *.tsbuildinfo
+.coverage
 .env
+node_modules/
+**/node_modules/
 web_sota/node_modules/
 web_sota/dist/
 web_sota/test-results/
@@ -19,4 +24,5 @@ native/target/
 native/binaries/
 native/gen/
 native/resources/
+mcpb/src/
 reports/

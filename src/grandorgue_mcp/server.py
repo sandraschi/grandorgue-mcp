@@ -15,6 +15,7 @@ import asyncio
 import base64
 import io
 import json
+import logging
 import os as _os
 import sqlite3 as _sqlite3
 import zipfile
@@ -48,6 +49,19 @@ PORT = int(_os.getenv("PORT", "11010"))
 HOST = _os.getenv("HOST", "127.0.0.1")
 
 mcp = FastMCP("grandorgue-mcp")
+
+logger = logging.getLogger("grandorgue_mcp")
+
+
+def _error_response(message: str, **extra: Any) -> dict[str, Any]:
+    """Build a dialogic error payload and log the traceback.
+
+    Call inside ``except`` blocks so the traceback is captured via
+    ``logger.exception`` (TOOL_DESIGN_STANDARDS.md S7.1 Pattern 3).
+    """
+    logger.exception("grandorgue-mcp error: %s", message)
+    return {"success": False, "message": message, **extra}
+
 
 _ws_clients: list[WebSocket] = []
 _bg_tasks: set[asyncio.Task] = set()
@@ -129,12 +143,18 @@ async def _load_organ_impl(path: str = "", name: str | None = None) -> dict[str,
     if auto_result["success"]:
         info = organ_manager.load_organ(organ_path)
         save_last_organ(organ_name, organ_path)
-        return {"success": True, "organ": info.model_dump(), "auto_loaded": True}
+        return {
+            "success": True,
+            "message": f"Loaded organ '{organ_name}'",
+            "organ": info.model_dump(),
+            "auto_loaded": True,
+        }
 
     info = organ_manager.load_organ(organ_path)
     save_last_organ(organ_name, organ_path)
     return {
         "success": True,
+        "message": f"Registered organ '{organ_name}' (manual load still needed)",
         "organ": info.model_dump(),
         "auto_loaded": False,
         "note": auto_result.get("message"),
@@ -147,7 +167,7 @@ def _depot_list_impl() -> dict[str, Any]:
         if p.suffix.lower() in (".mid", ".midi"):
             stat = p.stat()
             files.append({"name": p.name, "size_bytes": stat.st_size, "modified": stat.st_mtime})
-    return {"success": True, "files": files}
+    return {"success": True, "message": f"{len(files)} MIDI files in depot", "files": files}
 
 
 def _depot_upload_impl(name: str, data_base64: str) -> dict[str, Any]:
@@ -159,8 +179,8 @@ def _depot_upload_impl(name: str, data_base64: str) -> dict[str, Any]:
     try:
         path.write_bytes(base64.b64decode(data_base64))
     except (ValueError, OSError) as e:
-        return {"success": False, "message": f"Upload failed: {e}"}
-    return {"success": True, "path": str(path)}
+        return _error_response(f"Upload failed: {e}")
+    return {"success": True, "message": f"Uploaded {path.name}", "path": str(path)}
 
 
 def _depot_download_impl(name: str) -> dict[str, Any]:
@@ -168,7 +188,13 @@ def _depot_download_impl(name: str) -> dict[str, Any]:
     if path is None or not path.exists():
         return {"success": False, "message": f"File not found: {name}"}
     data = base64.b64encode(path.read_bytes()).decode()
-    return {"success": True, "name": path.name, "data_base64": data, "size_bytes": path.stat().st_size}
+    return {
+        "success": True,
+        "message": f"Downloaded {path.name}",
+        "name": path.name,
+        "data_base64": data,
+        "size_bytes": path.stat().st_size,
+    }
 
 
 def _depot_delete_impl(name: str) -> dict[str, Any]:
@@ -238,13 +264,15 @@ async def go_status() -> dict[str, Any]:
     """Get GrandOrgue process, MIDI, and organ status.
 
     ## Return Format
-    {"success": bool, "go_running": bool, "midi_connected": bool, "organ": {...}}
+    {"success": bool, "message": str, "go_running": bool, "midi_connected": bool, "organ": {...}}
 
     ## Examples
     go_status()
     """
     payload = await _status_payload()
-    return {"success": True, **payload}
+    state = "running" if payload.get("go_running") else "stopped"
+    midi = "connected" if payload.get("midi_connected") else "disconnected"
+    return {"success": True, "message": f"GrandOrgue {state}, MIDI {midi}", **payload}
 
 
 @mcp.tool()
@@ -328,14 +356,14 @@ async def go_midi_disconnect() -> dict[str, Any]:
     """Close MIDI bridge connections.
 
     ## Return Format
-    {"success": bool}
+    {"success": bool, "message": str}
 
     ## Examples
     go_midi_disconnect()
     """
     await anyio.to_thread.run_sync(midi_bridge.disconnect)
     await _notify_status()
-    return {"success": True}
+    return {"success": True, "message": "MIDI bridge disconnected"}
 
 
 @mcp.tool()
@@ -343,7 +371,7 @@ async def go_list_midi_ports() -> dict[str, Any]:
     """List all available MIDI input and output ports on the system.
 
     ## Return Format
-    {"success": bool, "inputs": [...], "outputs": [...]}
+    {"success": bool, "message": str, "inputs": [...], "outputs": [...]}
 
     ## Examples
     go_list_midi_ports()
@@ -351,6 +379,7 @@ async def go_list_midi_ports() -> dict[str, Any]:
     status = await anyio.to_thread.run_sync(midi_bridge.list_ports)
     return {
         "success": True,
+        "message": f"Found {len(status.inputs)} inputs, {len(status.outputs)} outputs",
         "inputs": [p.model_dump() for p in status.inputs],
         "outputs": [p.model_dump() for p in status.outputs],
     }
@@ -373,7 +402,7 @@ async def go_play_note(
     background - the tool returns immediately.
 
     ## Return Format
-    {"success": bool, "note": int, "velocity": int, "channel": int}
+    {"success": bool, "message": str, "note": int, "velocity": int, "channel": int}
 
     ## Examples
     go_play_note(midi_note=60, velocity=80, duration_ms=1000)
@@ -382,7 +411,14 @@ async def go_play_note(
         return {"success": False, "message": "MIDI bridge not connected. Run go_midi_connect first."}
     midi_bridge.play_note(channel, midi_note, velocity)
     _spawn(_release_after(channel, [midi_note], duration_ms))
-    return {"success": True, "note": midi_note, "velocity": velocity, "channel": channel, "duration_ms": duration_ms}
+    return {
+        "success": True,
+        "message": f"Playing note {midi_note} on channel {channel}",
+        "note": midi_note,
+        "velocity": velocity,
+        "channel": channel,
+        "duration_ms": duration_ms,
+    }
 
 
 @mcp.tool()
@@ -396,7 +432,7 @@ async def go_play_chord(
     The release is scheduled in the background - the tool returns immediately.
 
     ## Return Format
-    {"success": bool, "notes": [...], "velocity": int}
+    {"success": bool, "message": str, "notes": [...], "velocity": int}
 
     ## Examples
     go_play_chord(notes=[60, 64, 67], duration_ms=1500)
@@ -408,7 +444,13 @@ async def go_play_chord(
     for n in notes:
         midi_bridge.play_note(channel, n, velocity)
     _spawn(_release_after(channel, notes, duration_ms))
-    return {"success": True, "notes": notes, "velocity": velocity, "duration_ms": duration_ms}
+    return {
+        "success": True,
+        "message": f"Playing chord of {len(notes)} notes on channel {channel}",
+        "notes": notes,
+        "velocity": velocity,
+        "duration_ms": duration_ms,
+    }
 
 
 @mcp.tool()
@@ -419,7 +461,7 @@ async def go_set_stop(
     """Set a stop (drawstop/tab) on or off via MIDI CC.
 
     ## Return Format
-    {"success": bool, "stop_cc": int, "state": bool}
+    {"success": bool, "message": str, "stop_cc": int, "state": bool}
 
     ## Examples
     go_set_stop(stop_cc=21, state=True)
@@ -427,7 +469,12 @@ async def go_set_stop(
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
     midi_bridge.set_stop(stop_cc, state)
-    return {"success": True, "stop_cc": stop_cc, "state": state}
+    return {
+        "success": True,
+        "message": f"Stop CC {stop_cc} {'on' if state else 'off'}",
+        "stop_cc": stop_cc,
+        "state": state,
+    }
 
 
 @mcp.tool()
@@ -437,7 +484,7 @@ async def go_set_crescendo(
     """Set crescendo pedal position (0-127).
 
     ## Return Format
-    {"success": bool, "value": int}
+    {"success": bool, "message": str, "value": int}
 
     ## Examples
     go_set_crescendo(value=64)
@@ -445,7 +492,7 @@ async def go_set_crescendo(
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
     midi_bridge.set_crescendo(value)
-    return {"success": True, "value": value}
+    return {"success": True, "message": f"Crescendo set to {value}", "value": value}
 
 
 @mcp.tool()
@@ -456,7 +503,7 @@ async def go_set_enclosure(
     """Set expression (swell) enclosure level via MIDI CC.
 
     ## Return Format
-    {"success": bool, "cc": int, "value": int}
+    {"success": bool, "message": str, "cc": int, "value": int}
 
     ## Examples
     go_set_enclosure(cc=7, value=80)
@@ -464,7 +511,7 @@ async def go_set_enclosure(
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
     midi_bridge.set_enclosure(cc, value)
-    return {"success": True, "cc": cc, "value": value}
+    return {"success": True, "message": f"Enclosure CC {cc} set to {value}", "cc": cc, "value": value}
 
 
 @mcp.tool()
@@ -472,7 +519,7 @@ async def go_combination(number: int = 1) -> dict[str, Any]:
     """Trigger a combination (general piston) via MIDI Program Change.
 
     ## Return Format
-    {"success": bool, "number": int}
+    {"success": bool, "message": str, "number": int}
 
     ## Examples
     go_combination(number=3)
@@ -480,7 +527,7 @@ async def go_combination(number: int = 1) -> dict[str, Any]:
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
     midi_bridge.trigger_combination(number)
-    return {"success": True, "number": number}
+    return {"success": True, "message": f"Combination {number} triggered", "number": number}
 
 
 @mcp.tool()
@@ -488,7 +535,7 @@ async def go_panic() -> dict[str, Any]:
     """Send all-notes-off / panic to GrandOrgue.
 
     ## Return Format
-    {"success": bool}
+    {"success": bool, "message": str}
 
     ## Examples
     go_panic()
@@ -496,7 +543,7 @@ async def go_panic() -> dict[str, Any]:
     if not midi_bridge.connected:
         return {"success": False, "message": "MIDI bridge not connected."}
     midi_bridge.all_notes_off()
-    return {"success": True}
+    return {"success": True, "message": "All notes off"}
 
 
 @mcp.tool()
@@ -551,14 +598,14 @@ async def go_unload_organ() -> dict[str, Any]:
     """Unload the current organ.
 
     ## Return Format
-    {"success": bool}
+    {"success": bool, "message": str}
 
     ## Examples
     go_unload_organ()
     """
     organ_manager.unload_organ()
     await _notify_status()
-    return {"success": True}
+    return {"success": True, "message": "Organ unloaded"}
 
 
 @mcp.tool()
@@ -566,7 +613,7 @@ async def go_list_organs() -> dict[str, Any]:
     """List installed sample sets and known free catalogs.
 
     ## Return Format
-    {"success": bool, "installed": [...], "catalog": [...]}
+    {"success": bool, "message": str, "installed": [...], "catalog": [...]}
 
     ## Examples
     go_list_organs()
@@ -575,6 +622,7 @@ async def go_list_organs() -> dict[str, Any]:
     catalog = organ_manager.list_catalog()
     return {
         "success": True,
+        "message": f"{len(installed)} installed, {len(catalog)} in catalog",
         "installed": [e.model_dump() for e in installed],
         "catalog": [e.model_dump() for e in catalog],
     }
@@ -585,7 +633,7 @@ async def go_send_sysex(data_hex: str = "") -> dict[str, Any]:
     """Send raw MIDI SYSEX data (hex string, e.g. 'F0 7D 10 ... F7').
 
     ## Return Format
-    {"success": bool}
+    {"success": bool, "message": str}
 
     ## Examples
     go_send_sysex(data_hex="F0 7D 01 00 F7")
@@ -595,7 +643,7 @@ async def go_send_sysex(data_hex: str = "") -> dict[str, Any]:
     try:
         raw = bytes.fromhex(data_hex.replace(" ", ""))
         midi_bridge.send_sysex(raw)
-        return {"success": True}
+        return {"success": True, "message": f"Sent {len(raw)} SYSEX bytes"}
     except ValueError as e:
         return {"success": False, "message": f"Invalid hex: {e}"}
 
@@ -605,7 +653,7 @@ async def go_marketplace_search(query: str = "") -> dict[str, Any]:
     """Search the GrandOrgue sample set marketplace by name, style, or builder.
 
     ## Return Format
-    {"success": bool, "results": [...], "total": int}
+    {"success": bool, "message": str, "results": [...], "total": int}
 
     ## Examples
     go_marketplace_search(query="Baroque")
@@ -615,7 +663,12 @@ async def go_marketplace_search(query: str = "") -> dict[str, Any]:
     if query:
         q = query.lower()
         results = [r for r in results if q in r.get("name", "").lower() or q in r.get("description", "").lower()]
-    return {"success": True, "results": results, "total": len(results)}
+    return {
+        "success": True,
+        "message": f"Found {len(results)} sample sets",
+        "results": results,
+        "total": len(results),
+    }
 
 
 @mcp.tool()
@@ -648,14 +701,14 @@ async def go_bach_catalog(bwv: int | None = None) -> dict[str, Any]:
     """Search the J.S. Bach organ works catalog by BWV number.
 
     ## Return Format
-    {"success": bool, "works": [...], "total": int}
+    {"success": bool, "message": str, "works": [...], "total": int}
 
     ## Examples
     go_bach_catalog(bwv=565)
     go_bach_catalog()
     """
     works = search_bach(bwv)
-    return {"success": True, "works": works, "total": len(works)}
+    return {"success": True, "message": f"Found {len(works)} works", "works": works, "total": len(works)}
 
 
 @mcp.tool()
@@ -713,12 +766,13 @@ async def go_midi_playback_status() -> dict[str, Any]:
     """Check if a MIDI file is currently playing through the MIDI bridge.
 
     ## Return Format
-    {"success": bool, "playing": bool}
+    {"success": bool, "message": str, "playing": bool}
 
     ## Examples
     go_midi_playback_status()
     """
-    return {"success": True, "playing": midi_bridge.playback_active}
+    playing = midi_bridge.playback_active
+    return {"success": True, "message": "Playing" if playing else "Idle", "playing": playing}
 
 
 @mcp.tool()
@@ -812,6 +866,9 @@ async def grandorgue_shutdown(
 
     ## Return Format
     {"success": bool, "message": str}
+
+    ## Examples
+    grandorgue_shutdown(confirm=True)
     """
     if not confirm:
         return {"success": False, "message": "Shutdown requires confirm=True"}
@@ -819,6 +876,7 @@ async def grandorgue_shutdown(
     await anyio.to_thread.run_sync(go_process.stop)
     await anyio.to_thread.run_sync(midi_bridge.disconnect)
     _spawn(_kill_after_delay())
+    return {"success": True, "message": "Server shutting down"}
 
 
 async def _kill_after_delay() -> None:
@@ -859,6 +917,12 @@ app.add_middleware(
 @app.get("/health")
 async def health() -> dict[str, Any]:
     return {"ok": True, "service": "grandorgue-mcp", "port": PORT}
+
+
+@app.get("/api/v1/health")
+async def health_v1() -> dict[str, Any]:
+    """Versioned liveness alias (used by scripts/cua-nsis-config.json)."""
+    return await health()
 
 
 @app.get("/api/status")
@@ -1198,8 +1262,8 @@ _OLLAMA_BASE = _os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 _LMSTUDIO_BASE = _os.getenv("LMSTUDIO_BASE_URL", "http://127.0.0.1:1234")
 
 
-@app.get("/api/llm/providers")
-async def api_llm_providers() -> JSONResponse:
+async def _llm_providers_impl() -> list[dict[str, Any]]:
+    """Probe Ollama + LM Studio and return provider dicts (shared helper)."""
     providers: list[dict[str, Any]] = []
     async with httpx.AsyncClient(timeout=3.0) as client:
         try:
@@ -1224,7 +1288,12 @@ async def api_llm_providers() -> JSONResponse:
                 "needs_key": False,
             }
         )
-    return JSONResponse(content={"providers": providers})
+    return providers
+
+
+@app.get("/api/llm/providers")
+async def api_llm_providers() -> JSONResponse:
+    return JSONResponse(content={"providers": await _llm_providers_impl()})
 
 
 @app.post("/api/llm/chat")
@@ -1312,6 +1381,190 @@ async def api_skills() -> JSONResponse:
             }
         ]
     )
+
+
+@mcp.prompt()
+def grandorgue_assistant() -> str:
+    """System preprompt for the GrandOrgue pipe organ assistant.
+
+    ## Return Format
+    str (system prompt used as the base for chat + personality composition)
+    """
+    return (
+        "You are the GrandOrgue console assistant. You control a GrandOrgue pipe organ "
+        "simulator through 31 MCP tools: process control (go_status, go_start, go_stop), "
+        "MIDI bridge (go_midi_connect, go_midi_disconnect, go_list_midi_ports), organ "
+        "performance (go_play_note, go_play_chord, go_set_stop, go_set_crescendo, "
+        "go_set_enclosure, go_combination, go_panic, go_send_sysex), organ management "
+        "(go_load_organ, go_auto_load, go_unload_organ, go_list_organs), marketplace "
+        "(go_marketplace_search, go_marketplace_download), Bach repertoire "
+        "(go_bach_catalog), MIDI playback (go_play_midi_file, go_play_midi_file_ui, "
+        "go_midi_playback_status, go_stop_playback), and the MIDI depot (midi_depot_list, "
+        "midi_depot_upload, midi_depot_download, midi_depot_delete, "
+        "midi_depot_download_bach). Always check go_status before playing, and "
+        "go_midi_connect before sending any MIDI."
+    )
+
+
+@app.get("/api/capabilities")
+async def api_capabilities() -> JSONResponse:
+    """Standard fleet capabilities shape for dynamic webapp discovery.
+
+    ## Return Format
+    {"server": str, "version": str, "tools": [str], "features": {...}}
+    """
+    return JSONResponse(
+        content={
+            "server": "grandorgue-mcp",
+            "version": "0.3.0",
+            "tools": sorted(
+                [
+                    "go_status",
+                    "go_start",
+                    "go_stop",
+                    "go_midi_connect",
+                    "go_midi_disconnect",
+                    "go_list_midi_ports",
+                    "go_play_note",
+                    "go_play_chord",
+                    "go_set_stop",
+                    "go_set_crescendo",
+                    "go_set_enclosure",
+                    "go_combination",
+                    "go_panic",
+                    "go_load_organ",
+                    "go_auto_load",
+                    "go_unload_organ",
+                    "go_list_organs",
+                    "go_send_sysex",
+                    "go_marketplace_search",
+                    "go_marketplace_download",
+                    "go_bach_catalog",
+                    "go_play_midi_file",
+                    "go_play_midi_file_ui",
+                    "go_midi_playback_status",
+                    "go_stop_playback",
+                    "midi_depot_list",
+                    "midi_depot_upload",
+                    "midi_depot_download",
+                    "midi_depot_delete",
+                    "midi_depot_download_bach",
+                    "grandorgue_shutdown",
+                ]
+            ),
+            "features": {
+                "websocket": True,
+                "registrations": True,
+                "llm_proxy": True,
+                "llm_stream": True,
+                "diagnostics": True,
+            },
+        }
+    )
+
+
+@app.get("/api/llm/discover")
+async def api_llm_discover() -> JSONResponse:
+    """Probe local LLM providers and report presence + GPU hint.
+
+    ## Return Format
+    {"providers": [{"id": str, "label": str, "detected": bool, "models": [...]}],
+     "gpu": {"detected": bool|null}}
+    """
+    providers = await _llm_providers_impl()
+    return JSONResponse(
+        content={
+            "providers": [
+                {
+                    "id": p["id"],
+                    "label": p["label"],
+                    "detected": len(p.get("models", [])) > 0,
+                    "models": p.get("models", []),
+                }
+                for p in providers
+            ],
+            "gpu": {"detected": None, "note": "Run nvidia-smi on the host for GPU detail"},
+        }
+    )
+
+
+@app.get("/api/llm/models")
+async def api_llm_models(provider: str = "ollama") -> JSONResponse:
+    """Model list for one provider (live when reachable, else empty).
+
+    ## Return Format
+    {"provider": str, "models": [str]}
+    """
+    for p in await _llm_providers_impl():
+        if p["id"] == provider:
+            return JSONResponse(content={"provider": provider, "models": p.get("models", [])})
+    return JSONResponse(status_code=404, content={"provider": provider, "models": [], "message": "Unknown provider"})
+
+
+@app.get("/api/llm/onboarding")
+async def api_llm_onboarding() -> JSONResponse:
+    """Fresh-install starter facts + recommended path for the under-hero cue.
+
+    ## Return Format
+    {"facts": [str], "recommended": {"provider": str, "model": str}, "setup_url": str}
+    """
+    return JSONResponse(
+        content={
+            "facts": [
+                "Local LLM keeps organ registrations and MIDI on this machine.",
+                "Ollama (port 11434) and LM Studio (port 1234) are auto-detected.",
+                "No key needed for local providers; cloud is not configured in this build.",
+            ],
+            "recommended": {"provider": "ollama", "model": "llama3.2:3b"},
+            "setup_url": "https://ollama.com/download",
+        }
+    )
+
+
+@app.post("/api/llm/chat/stream")
+async def api_llm_chat_stream(body: dict[str, Any]) -> Response:
+    """Streaming backend chat proxy (SSE, OpenAI-style chunks).
+
+    ## Return Format
+    text/event-stream with `data: {"chunk": str}` events + `data: [DONE]`
+    """
+    from fastapi.responses import StreamingResponse
+
+    provider = body.get("provider", "ollama")
+    model = body.get("model", "llama3.2:3b")
+    prompt = body.get("prompt") or body.get("message", "")
+    system = body.get("system", "")
+    base = f"{_LMSTUDIO_BASE}/v1" if provider == "lmstudio" else f"{_OLLAMA_BASE}/v1"
+    messages: list[dict[str, str]] = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+
+    async def _gen():
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream(
+                    "POST",
+                    f"{base}/chat/completions",
+                    json={"model": model, "messages": messages, "stream": True},
+                ) as resp:
+                    async for line in resp.aiter_lines():
+                        if not line or not line.startswith("data:"):
+                            continue
+                        payload = line[5:].strip()
+                        if payload == "[DONE]":
+                            break
+                        try:
+                            delta = json.loads(payload)["choices"][0]["delta"].get("content", "")
+                        except (KeyError, ValueError, IndexError):
+                            continue
+                        if delta:
+                            yield f"data: {json.dumps({'chunk': delta})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(_gen(), media_type="text/event-stream")
 
 
 # -- Registration Store (in-memory SQLite) ----------------------------------
@@ -1443,7 +1696,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     except Exception:
-        pass
+        logger.exception("WebSocket handler failed")
     finally:
         if ws in _ws_clients:
             _ws_clients.remove(ws)

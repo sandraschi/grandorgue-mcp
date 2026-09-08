@@ -98,7 +98,7 @@ class GoProcessManager:
         return info
 
     def _detect_version(self) -> str | None:
-        """Read version from the executable metadata — GO has no --version flag.
+        """Read version from the executable metadata - GO has no --version flag.
 
         Result is cached per (exe path, mtime): the frontend polls /api/status
         every few seconds and spawning PowerShell on every poll stalls the
@@ -159,7 +159,7 @@ class GoProcessManager:
                 return  # already configured
 
             # Find and update the [MIDIIn] section. GO configs may use CRLF or
-            # LF line endings — match both.
+            # LF line endings - match both.
             replaced = False
             for eol in ("\r\n", "\n"):
                 old = f"[MIDIIn]{eol}Count=0"
@@ -177,7 +177,7 @@ class GoProcessManager:
                     f.write(data.encode("utf-8"))
                 config_path.write_bytes(buf.getvalue())
         except Exception:
-            pass  # non-fatal — GO will still launch, just without MIDI input
+            pass  # non-fatal - GO will still launch, just without MIDI input
 
     def start(self, organ_path: str | None = None) -> GrandOrgueProcessInfo:
         existing_pid = self._resolve_running_pid()

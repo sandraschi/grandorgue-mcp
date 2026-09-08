@@ -1,4 +1,4 @@
-"""Windows MIDI helper for GrandOrgue — keystroke injection for GO's MIDI player.
+"""Windows MIDI helper for GrandOrgue - keystroke injection for GO's MIDI player.
 
 Since GO's MinGW build doesn't register WINDOWS_MM in RtMidi's getCompiledApi,
 we bypass GO's MIDI input entirely and drive GrandOrgue's built-in MIDI file
@@ -48,7 +48,7 @@ def find_window(title: str) -> int | None:
 def _vk_for_char(ch: str) -> tuple[int, bool] | None:
     """Map a character to (virtual-key code, needs-shift) for the active layout.
 
-    ord(char.upper()) is only correct for A-Z/0-9 — '.' is 0x2E which is
+    ord(char.upper()) is only correct for A-Z/0-9 - '.' is 0x2E which is
     VK_DELETE, so naive mapping corrupts every filename. VkKeyScanW returns
     the proper VK in the low byte and shift state in bit 0 of the high byte.
     """

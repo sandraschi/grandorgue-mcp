@@ -10,7 +10,8 @@
     "test:e2e": "playwright test",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check --write ."
+    "check": "biome check --write .",
+    "biome:ci": "biome check src/"
   },
   "dependencies": {
     "@coderline/alphatab": "^1.8.3",

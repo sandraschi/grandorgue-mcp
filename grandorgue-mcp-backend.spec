@@ -1,3 +1,7 @@
+﻿import sys, os
+site_pkgs = os.path.abspath('.venv/Lib/site-packages')
+if site_pkgs not in sys.path:
+    sys.path.insert(0, site_pkgs)
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import copy_metadata
 
@@ -9,15 +13,15 @@ datas += copy_metadata('fastapi')
 a = Analysis(
     ['run_server.py'],
     pathex=[],
-    
+
     binaries=[],
-    
+
     datas=datas,
     hiddenimports=['uvicorn.logging',
     "_strptime",
 ],
 hookspath=[],
-    
+
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
@@ -32,7 +36,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    
+
     name='grandorgue-mcp-backend',
     debug=False,
     bootloader_ignore_signals=False,
@@ -47,11 +51,3 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
-
-
-
-
-
-
-
-

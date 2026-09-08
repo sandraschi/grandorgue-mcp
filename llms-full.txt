@@ -56,7 +56,8 @@ GrandOrgue MCP connects GrandOrgue pipe organ simulator to AI agents and a moder
 ## REST API Endpoints
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /health | Liveness probe |
+| GET | /health | Liveness probe (alias `/api/v1/health`) |
+| GET | /api/capabilities | Fleet capabilities (tools, features) for dynamic discovery |
 | GET | /api/status | Server status |
 | GET | /api/settings | App settings |
 | PUT | /api/settings | Save settings |
@@ -89,8 +90,16 @@ GrandOrgue MCP connects GrandOrgue pipe organ simulator to AI agents and a moder
 | GET | /api/midi-depot/{name}/raw | Raw download |
 | POST | /api/midi-depot/batch/bach | Download Bach bundle |
 | GET | /api/llm/providers | LLM provider discovery |
-| POST | /api/llm/chat | LLM chat |
+| GET | /api/llm/discover | Presence probe + GPU hint (under-hero cue) |
+| GET | /api/llm/models | Model list per provider |
+| GET | /api/llm/onboarding | Starter facts + recommended path |
+| POST | /api/llm/chat | LLM chat (backend proxy, keys stay server-side) |
+| POST | /api/llm/chat/stream | Streaming chat proxy (SSE) |
 | GET | /api/skills | Skill listing |
+| GET | /api/v1/diagnostics | Full diagnostics (CUA smoke) |
+
+MCP prompt: `grandorgue_assistant` (system preprompt for chat).
+MCP resource: `status://grandorgue` (live status).
 
 WebSocket: `/ws` — real-time organ status push
 

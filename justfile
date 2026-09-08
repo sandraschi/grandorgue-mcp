@@ -14,9 +14,17 @@ run server:
 run-stdio:
     uv run grandorgue-mcp
 
-# Build the mcpb bundle (staged from canonical src/)
+# Serve backend in HTTP mode (fleet checklist `serve` recipe)
+serve:
+    $env:MCP_TRANSPORT = "http"; uv run grandorgue-mcp
+
+# Build the mcpb bundle (staged from canonical src/).
+# NOTE: the vendored `mcpb-pack` recipe (fleet.just -> mcpb/pack.ps1) cannot
+# work here: make-mcpb.ps1 wipes + re-scaffolds mcpb/ on every run, so no
+# pack.ps1 can survive inside it. `just mcpb` is the working path (flagged
+# as a fleet-template gap — fleet.just should call scripts/mcpb-pack.ps1).
 mcpb:
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\make-mcpb.ps1" -RepoPath "{{REPO}}"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{REPO}}/scripts/mcpb-pack.ps1"
 
 # Lint and format Python
 lint check:
@@ -36,6 +44,20 @@ test:
 ci:
     uv run ruff check src/ tests/
     uv run pytest tests -q
+
+# Playwright e2e (backend+frontend come from webServer config)
+e2e:
+    cd web_sota; bunx playwright test
+
+# All gates green (lint + format check + tests + frontend types)
+gates-green:
+    uv run ruff check src/ tests/
+    uv run ruff format --check src/ tests/
+    uv run pytest tests -q
+    cd web_sota; bunx tsc -b
+
+# Alias: certify = gates-green
+certify: gates-green
 
 # Sync deps (backend)
 install:
@@ -65,7 +87,7 @@ build-native-debug:
 
 # Clean build artifacts
 clean:
-    powershell -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue dist, build, .ruff_cache, .pytest_cache, web_sota/node_modules, web_sota/dist; Get-ChildItem -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned.'"
+    powershell.exe -NoProfile -Command "Remove-Item -Recurse -Force -ErrorAction SilentlyContinue dist, build, .ruff_cache, .pytest_cache, web_sota/node_modules, web_sota/dist; Get-ChildItem -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned.'"
 
 # Backend health check
 health:

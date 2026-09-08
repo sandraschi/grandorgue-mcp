@@ -21,12 +21,22 @@ const PERSONALITIES = [
     label: "Concise",
     prompt: "You are a concise assistant. Give brief, to-the-point answers.",
   },
+  {
+    id: "organist",
+    label: "Organist",
+    prompt:
+      "You are a seasoned pipe organist advising on GrandOrgue registrations, manuals, and Bach repertoire.",
+  },
+  { id: "custom", label: "Custom", prompt: "" },
 ];
 
 const EXAMPLES = [
   "What can you do?",
   "Show me the current status",
-  "Help me understand this system",
+  "Is the MIDI bridge connected?",
+  "What organs are installed?",
+  "Find Bach works with BWV 565",
+  "Suggest a registration for a quiet hymn",
 ];
 
 export default function FloatingChat() {
@@ -137,10 +147,13 @@ export default function FloatingChat() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50" data-testid="floating-chat">
+    <div className="fixed bottom-5 right-5 z-50" data-testid="chat-page">
       {open ? (
         <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-[380px] h-[520px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+          <div
+            className="flex items-center justify-between px-4 py-3 border-b border-slate-700"
+            data-testid="chat-controls"
+          >
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-slate-200">Chat</span>
               {skillName && (
@@ -152,6 +165,7 @@ export default function FloatingChat() {
             <div className="flex items-center gap-1.5">
               <select
                 className="bg-slate-800 border border-slate-600 rounded text-[10px] px-1.5 py-1 text-slate-300 max-w-[80px]"
+                data-testid="personality-select"
                 value={personality}
                 onChange={(e) => {
                   setPersonality(e.target.value);
@@ -180,7 +194,7 @@ export default function FloatingChat() {
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 text-sm" data-testid="chat-messages">
             {chat.length === 0 && (
               <div className="text-center pt-4">
                 <p className="text-slate-500 text-xs mb-3">Ask a question about this simulation.</p>
@@ -229,13 +243,13 @@ export default function FloatingChat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                data-testid="floating-chat-input"
+                data-testid="chat-input"
               />
               <button
                 onClick={handleSend}
                 disabled={loading || !input.trim()}
                 className="bg-cyan-700 hover:bg-cyan-600 disabled:bg-slate-700 text-white px-3 py-2 rounded-lg text-sm font-medium"
-                data-testid="floating-chat-send"
+                data-testid="chat-send"
               >
                 Go
               </button>
@@ -246,6 +260,7 @@ export default function FloatingChat() {
                 disabled={chat.length === 0}
                 className="text-slate-500 hover:text-slate-300 disabled:text-slate-700 text-xs px-1.5 py-1 rounded"
                 title="Export chat"
+                data-testid="chat-export"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -269,7 +284,7 @@ export default function FloatingChat() {
                 disabled={chat.length === 0}
                 className="text-slate-500 hover:text-slate-300 disabled:text-slate-700 text-xs px-1.5 py-1 rounded"
                 title="Clear chat"
-                data-testid="floating-chat-clear"
+                data-testid="chat-clear"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

@@ -1,4 +1,4 @@
-"""J.S. Bach organ works catalog — single source of truth.
+"""J.S. Bach organ works catalog - single source of truth.
 
 Used by the go_bach_catalog MCP tool and the /api/bach/catalog REST endpoint.
 Extend freely; keep entries sorted roughly by fame.

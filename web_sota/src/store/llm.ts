@@ -24,19 +24,41 @@ export interface LLMState {
   probeAll: () => Promise<void>;
 }
 
-const PROVIDERS_CONFIG = [
-  { id: "ollama", label: "Ollama", base_url: "http://127.0.0.1:11434", probe: "/api/tags" },
-  { id: "lmstudio", label: "LM Studio", base_url: "http://127.0.0.1:1234", probe: "/v1/models" },
-];
+const PROVIDER_LABELS: Record<string, string> = {
+  ollama: "Ollama",
+  lmstudio: "LM Studio",
+};
+
+const PROVIDER_URLS: Record<string, string> = {
+  ollama: "http://127.0.0.1:11434",
+  lmstudio: "http://127.0.0.1:1234",
+};
+
+function readSaved(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function mirrorSelection(provider: string, model: string) {
+  try {
+    localStorage.setItem("llm_provider", provider);
+    localStorage.setItem("llm_model", model);
+  } catch {
+    // private mode — zustand persist still holds the values
+  }
+}
 
 type LLMPersist = Pick<LLMState, "selectedProvider" | "selectedModel">;
 
 export const useLLMStore = create<LLMState>()(
   persist<LLMState, [], [], LLMPersist>(
     (set, get) => ({
-      providers: PROVIDERS_CONFIG.map((p) => ({ ...p, models: [], status: "probing" as const })),
-      selectedProvider: "ollama",
-      selectedModel: "",
+      providers: [],
+      selectedProvider: readSaved("llm_provider", "ollama"),
+      selectedModel: readSaved("llm_model", ""),
       gpuDetected: null,
       probing: false,
 
@@ -45,47 +67,63 @@ export const useLLMStore = create<LLMState>()(
         set((s) => ({
           providers: s.providers.map((p) => (p.id === id ? { ...p, status } : p)),
         })),
-      selectProvider: (id: string) => set({ selectedProvider: id, selectedModel: "" }),
-      selectModel: (model: string) => set({ selectedModel: model }),
+      selectProvider: (id: string) => {
+        set({ selectedProvider: id, selectedModel: "" });
+        mirrorSelection(id, "");
+      },
+      selectModel: (model: string) => {
+        set({ selectedModel: model });
+        mirrorSelection(get().selectedProvider, model);
+      },
       setGpuDetected: (detected: boolean) => set({ gpuDetected: detected }),
       setProbing: (probing: boolean) => set({ probing }),
 
       probeAll: async () => {
+        // Fleet rule: the browser never talks to LLM providers directly.
+        // All discovery goes through the backend proxy (GET /api/llm/providers),
+        // which is also how API keys stay server-side.
         set({ probing: true });
-        const updated = [...get().providers];
-        for (const p of updated) {
-          p.status = "probing" as const;
-          const cfg = PROVIDERS_CONFIG.find((c) => c.id === p.id);
-          if (!cfg) continue;
+        try {
+          const r = await fetch("/api/llm/providers", {
+            signal: AbortSignal.timeout(8000),
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const data = await r.json();
+          const providers: ProviderInfo[] = (data.providers ?? []).map(
+            (p: { id: string; label?: string; base_url?: string; models?: string[] }) => ({
+              id: p.id,
+              label: p.label || PROVIDER_LABELS[p.id] || p.id,
+              base_url: p.base_url || PROVIDER_URLS[p.id] || "",
+              models: p.models ?? [],
+              status: (p.models ?? []).length > 0 ? "detected" : "not_found",
+            }),
+          );
+          set({ providers, probing: false });
+          const detected = providers.find((p) => p.status === "detected");
+          if (detected) {
+            const state = get();
+            if (!state.selectedModel && detected.models.length > 0) {
+              set({
+                selectedProvider: detected.id,
+                selectedModel: detected.models[0],
+              });
+              mirrorSelection(detected.id, detected.models[0]);
+            }
+          }
           try {
-            const r = await fetch(`${p.base_url}${cfg.probe}`, {
-              signal: AbortSignal.timeout(3000),
+            const d = await fetch("/api/llm/discover", {
+              signal: AbortSignal.timeout(8000),
             });
-            if (r.ok) {
-              const data = await r.json();
-              p.status = "detected" as const;
-              if (p.id === "ollama" && data.models) {
-                p.models = (data.models as Array<{ name: string }>).map((m) => m.name);
-              } else if (p.id === "lmstudio" && data.data) {
-                p.models = (data.data as Array<{ id: string }>).map((m) => m.id);
-              }
-            } else {
-              p.status = "not_found" as const;
+            if (d.ok) {
+              const disc = await d.json();
+              if (disc?.gpu?.detected === true) set({ gpuDetected: true });
+              else if (disc?.gpu?.detected === false) set({ gpuDetected: false });
             }
           } catch {
-            p.status = "not_found" as const;
+            // discovery is best-effort; provider list already set
           }
-        }
-        set({ providers: updated, probing: false });
-        const detected = updated.find((p) => p.status === "detected");
-        if (detected) {
-          const state = get();
-          if (!state.selectedProvider || state.selectedProvider === "ollama") {
-            set({ selectedProvider: detected.id });
-          }
-          if (!state.selectedModel && detected.models.length > 0) {
-            set({ selectedModel: detected.models[0] });
-          }
+        } catch {
+          set({ probing: false });
         }
       },
     }),
@@ -98,11 +136,9 @@ export const useLLMStore = create<LLMState>()(
       }),
       merge: (persisted: unknown, current: LLMState) => {
         const p = persisted as Partial<LLMPersist>;
-        return {
-          ...current,
-          selectedProvider: p.selectedProvider ?? current.selectedProvider,
-          selectedModel: p.selectedModel ?? current.selectedModel,
-        };
+        const provider = p.selectedProvider || readSaved("llm_provider", current.selectedProvider);
+        const model = p.selectedModel || readSaved("llm_model", current.selectedModel);
+        return { ...current, selectedProvider: provider, selectedModel: model };
       },
     },
   ),

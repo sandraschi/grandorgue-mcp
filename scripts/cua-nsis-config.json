@@ -4,7 +4,24 @@
   "operator_exe": "grandorgue-mcp-native.exe",
   "backend_process_names": ["grandorgue-mcp-operator", "grandorgue-mcp-backend"],
   "backend_port": 11010,
+  "frontend_port": 11011,
   "health_path": "/api/v1/health",
+  "nav_routes": [
+    ["Dashboard", "Dashboard"],
+    ["Console", "Console"],
+    ["Library", "Library"],
+    ["Marketplace", "Marketplace"],
+    ["Memory", "Memory"],
+    ["Record", "Record"],
+    ["Registrations", "Registrations"],
+    ["MIDI Depot", "Depot"],
+    ["Player", "Player"],
+    ["Mixer", "Mixer"],
+    ["Assistant", "Assistant"],
+    ["Visualizer", "Visualizer"],
+    ["Practice", "Practice"],
+    ["Settings", "Settings"]
+  ],
   "diagnostics_path": "/api/v1/diagnostics",
   "feature_smoke_path": "/api/llm/providers",
   "window_title_re": "GrandOrgue MCP",
@@ -12,4 +29,3 @@
   "bridge_ok_text": "REST bridge reachable",
   "uninstall_registry_filter": "*GrandOrgue MCP*"
 }
-

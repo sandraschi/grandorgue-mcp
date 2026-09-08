@@ -23,6 +23,10 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --all-extras
       - run: uv run ruff check src/ tests/
+      - run: uv run ruff format --check src/ tests/
+      # Advisory until the 60-error anyio/mido stub baseline is fixed (see BUILD_LOG.md).
+      - run: uv run --with pyright pyright src/
+        continue-on-error: true
       - run: uv run pytest -q
 
   webapp:

@@ -114,4 +114,50 @@ export const api = {
     fetchJSON<any>(url, { method: "POST", body: JSON.stringify(body) }),
   get: (url: string) => fetchJSON<any>(url),
   del: (url: string) => fetchJSON<any>(url, { method: "DELETE" }),
+  capabilities: () =>
+    fetchJSON<{ server: string; version: string; tools: string[]; features: any }>("/capabilities"),
+  llmProviders: () =>
+    fetchJSON<{ providers: { id: string; label: string; models: string[] }[] }>("/llm/providers"),
+  llmDiscover: () => fetchJSON<any>("/llm/discover"),
+  llmModels: (provider: string) =>
+    fetchJSON<{ provider: string; models: string[] }>(
+      `/llm/models?provider=${encodeURIComponent(provider)}`,
+    ),
+  llmOnboarding: () => fetchJSON<any>("/llm/onboarding"),
+  llmChatStream: async function* (body: {
+    provider: string;
+    model: string;
+    prompt: string;
+    system?: string;
+  }) {
+    const r = await fetch(`${BASE}/llm/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok || !r.body) throw new ApiError(`HTTP ${r.status}`, r.status);
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split("\n\n");
+      buf = parts.pop() ?? "";
+      for (const part of parts) {
+        const line = part.trim();
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (payload === "[DONE]") return;
+        try {
+          const obj = JSON.parse(payload);
+          if (obj.chunk) yield obj.chunk as string;
+          else if (obj.error) throw new ApiError(obj.error, 502);
+        } catch (e) {
+          if (e instanceof ApiError) throw e;
+        }
+      }
+    }
+  },
 };

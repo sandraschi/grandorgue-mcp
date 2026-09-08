@@ -20,7 +20,7 @@ GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sampl
 ## Key Files
 - `src/grandorgue_mcp/server.py` — single canonical server (mcpb stages from here)
 - `pyproject.toml` — build config and entry points
-- `scripts/mcpb-pack.ps1` — mcpb bundle staging + pack
+- `scripts/mcpb-pack.ps1` — mcpb bundle staging + pack (`just mcpb`; wraps fleet `make-mcpb.ps1`, fresh-stages `src/`)
 - `CLAUDE.md` — Claude Code context
 
 Install docs: follow mcp-central-docs/standards/AGENT_INSTALL_REFERENCE.md
