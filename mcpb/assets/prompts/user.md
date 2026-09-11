@@ -434,7 +434,7 @@ expose 11010 to the open internet without a reverse proxy. Where do I report
 bugs? The repository issues page, with the Logs page full export attached —
 that bundle (server ring buffer plus your description) resolves most reports
 without a follow-up round. Can I drive all of this from an AI agent instead
-of clicking? Yes — that is the point of the MCP surface: all 31 tools, the
+of clicking? Yes — that is the point of the MCP surface: all 31 tools (plus 3 Prefab app cards for rich chat surfaces), the
 skill preprompt, and the status resource are available to any MCP client over
 stdio (Claude Desktop, the `.mcpb` bundle) or HTTP at `/mcp`. Agents follow
 the same playbooks as this guide: status first, connect before playing,

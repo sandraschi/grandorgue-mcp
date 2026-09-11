@@ -218,7 +218,7 @@ one call, then `go_play_midi_file` with any extracted name.
 ## Prompts, resources, and annotations
 
 The `grandorgue_assistant` prompt is this file's operational core in compressed
-form: it names all 31 tools and the status-first discipline, and chat clients
+form: it names all 31 tools (plus the 3 Prefab app cards) and the status-first discipline, and chat clients
 compose it with the user's chosen personality. The `status://grandorgue` resource
 exposes live `{go_running, midi_connected, organ}` for clients that poll rather
 than call. Every tool carries a machine-readable annotation: read-only tools

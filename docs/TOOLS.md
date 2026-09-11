@@ -1,6 +1,14 @@
-# Tools — grandorgue-mcp (31 MCP tools)
+# Tools — grandorgue-mcp (31 MCP tools + 3 Prefab app cards)
 
 All tools return `{success, message, ...}`. Full signatures: `docs/MCP_TOOLS.md`.
+
+## Prefab app cards (rich chat surfaces)
+
+`go_status_card`, `go_organs_card`, `go_depot_card` (`@mcp.tool(app=True)`,
+`src/grandorgue_mcp/tools/prefab/`). Same domain data as `go_status`,
+`go_list_organs`, `midi_depot_list`, rendered as cards in MCP hosts that
+support Apps/Prefab (Claude Desktop) with a text fallback everywhere else.
+Registration toggle: `GRANDORGUE_PREFAB_APPS=0` skips them (31 tools).
 
 > Why flat, not portmanteau (assfix 2026-09-08 decision): the 31 `go_*` /
 > `midi_depot_*` names are the published contract (glama.json, llms-full.txt,

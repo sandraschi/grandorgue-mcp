@@ -9,7 +9,7 @@ GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sampl
 - Full webapp (backend + Vite frontend :11011): `just web` / `.\start.ps1`
 
 ## Standards
-- Flat FastMCP tools (30) with an `operation`-style portmanteau refactor planned for v0.3 — do NOT claim portmanteau compliance yet
+- 34 FastMCP tools (31 flat + 3 Prefab app cards `go_*_card`) with an `operation`-style portmanteau refactor planned for v0.3 — do NOT claim portmanteau compliance yet
 - Dual transport via `MCP_TRANSPORT` env: `stdio` (default) | `http`
 - Responses: structured dicts with `success`, `message`, domain-specific fields
 - Shared logic lives in plain helper functions; NEVER call an `@mcp.tool()`-decorated object directly (FunctionTool is not callable — use the `_impl` helpers)

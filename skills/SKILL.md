@@ -8,7 +8,9 @@ description: GrandOrgue pipe organ simulator — MIDI bridge, organ control, sam
 ## Session Context (GrandOrgue MCP)
 
 You have access to a GrandOrgue pipe organ simulator MCP server with 31 tools
-for MIDI bridge, organ control, sample set management, and Bach repertoire.
+for MIDI bridge, organ control, sample set management, and Bach repertoire,
+plus 3 Prefab app cards (`go_status_card`, `go_organs_card`, `go_depot_card`)
+for rich status/organs/depot surfaces in chat.
 
 **Before starting work:**
 

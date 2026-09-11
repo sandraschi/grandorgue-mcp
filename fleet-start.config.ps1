@@ -5,7 +5,7 @@
     BackendPort  = 11010
     FrontendPort = 11011
     HealthPath   = '/health'
-    WebRoot      = 'D:\Dev\repos\grandorgue-mcp\web_sota'
+    WebRoot      = 'web_sota'
     Backend = @{
         Kind          = 'uvicorn'
         UvicornTarget = 'grandorgue_mcp.server:app'
@@ -14,7 +14,7 @@
     }
     Frontend = @{
         Kind           = 'vite-npm'
-        PackageManager = 'bun'
+        PackageManager = 'npm'
         PortEnvVar     = 'VITE_PORT'
         ApiTargetEnv   = 'VITE_API_TARGET'
     }

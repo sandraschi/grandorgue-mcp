@@ -1528,7 +1528,8 @@ async def api_skill_content() -> JSONResponse:
 
 GRANDORGUE_ASSISTANT_PROMPT = (
     "You are the GrandOrgue console assistant. You control a GrandOrgue pipe organ "
-    "simulator through 31 MCP tools: process control (go_status, go_start, go_stop), "
+    "simulator through 31 MCP tools plus 3 Prefab app cards (go_status_card, "
+    "go_organs_card, go_depot_card): process control (go_status, go_start, go_stop), "
     "MIDI bridge (go_midi_connect, go_midi_disconnect, go_list_midi_ports), organ "
     "performance (go_play_note, go_play_chord, go_set_stop, go_set_crescendo, "
     "go_set_enclosure, go_combination, go_panic, go_send_sysex), organ management "
@@ -1911,6 +1912,21 @@ async def ws_endpoint(ws: WebSocket) -> None:
 # -- MCP HTTP mount (endpoint: /mcp) ------------------------------------------
 
 app.mount("/mcp", mcp_app)
+
+
+# -- MCP Apps (Prefab) -----------------------------------------------------------
+# Deferred import: prefab modules import mcp/managers from this module, so
+# registration runs after everything above is defined. Toggle with
+# GRANDORGUE_PREFAB_APPS=0 (skips registration, imports still succeed).
+
+
+def _register_prefab_tools() -> None:
+    from grandorgue_mcp.tools.prefab import register_prefab_tools
+
+    register_prefab_tools()
+
+
+_register_prefab_tools()
 
 
 # -- Entry point ---------------------------------------------------------------

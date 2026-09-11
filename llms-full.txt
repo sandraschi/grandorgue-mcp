@@ -9,7 +9,12 @@ GrandOrgue MCP connects GrandOrgue pipe organ simulator to AI agents and a moder
 | Backend (HTTP/MCP/WS) | 11010 |
 | Frontend (Vite dev) | 11011 |
 
-## MCP Tools (30)
+## MCP Tools (31 flat + 3 Prefab app cards)
+
+### Prefab App Cards (rich chat surfaces, `@mcp.tool(app=True)`)
+- `go_status_card` — Engine/MIDI/organ status card (same data as `go_status`)
+- `go_organs_card` — Installed organs + free catalog card
+- `go_depot_card` — MIDI depot files card
 
 ### Process Control
 - `go_status` — GrandOrgue process, MIDI, and organ status
