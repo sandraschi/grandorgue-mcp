@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { wsOrigin } from "@/api/client";
 
 interface WSMessage {
   type: string;
@@ -15,8 +16,7 @@ export function useWebSocket() {
 
   const connect = useCallback(() => {
     if (!aliveRef.current) return;
-    const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${proto}//${location.host}/ws`);
+    const ws = new WebSocket(`${wsOrigin()}/ws`);
     wsRef.current = ws;
 
     ws.onopen = () => {

@@ -1,7 +1,17 @@
-const BASE = "/api";
+/**
+ * Backend origin. "" in dev (the Vite proxy makes same-origin correct). Installer builds set
+ * VITE_API_BASE to the operator backend (see native/build.ps1) because the Tauri webview has
+ * no proxy: same-origin there is tauri://localhost, not the backend.
+ */
+export const API_BASE: string = import.meta.env.VITE_API_BASE ?? "";
 
-/** Same-origin base (vendored pages import API_BASE; the Vite proxy makes "" correct). */
-export const API_BASE = "";
+/** ws(s) origin of the backend, for WebSocket connections. */
+export function wsOrigin(): string {
+  if (API_BASE) return API_BASE.replace(/^http/, "ws");
+  return `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}`;
+}
+
+const BASE = `${API_BASE}/api`;
 
 export async function apiGet<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, {

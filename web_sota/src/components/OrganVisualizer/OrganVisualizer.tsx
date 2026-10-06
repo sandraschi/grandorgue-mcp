@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { wsOrigin } from "@/api/client";
 
 interface PipeState {
   index: number;
@@ -101,7 +102,7 @@ export default function OrganVisualizer() {
   useEffect(() => {
     const connect = () => {
       try {
-        const ws = new WebSocket("ws://127.0.0.1:11010/ws");
+        const ws = new WebSocket(`${wsOrigin()}/ws`);
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data);
