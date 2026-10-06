@@ -1,5 +1,22 @@
 # Build Log
 
+## 2026-10-06 - NSIS rebuild after dead-spawn-path fix
+
+Result: `dist/GrandOrgue MCP_0.3.0_x64-setup.exe` (30.7 MiB). Frozen backend smoke test on the
+operator port: listens on 11244, `GET /health` and `GET /api/apps` return 200, no red flags in stderr.
+Not run: CUA install/launch/uninstall smoke test. `native/build.ps1` has no frozen-binary smoke step.
+
+Fixed before building:
+
+| Problem | Fix |
+|---------|-----|
+| `main.rs` had its own `start_backend` (spawned with `--http --port 11010`, no port freeing, no health poll); `backend.rs::spawn_backend` was dead code. | `start_backend` calls `spawn_backend`; child killed on `Exit` and `ExitRequested`. |
+| Operator used the dev backend port 11010. | Operator port 11244 (claimed as `grandorgue-mcp-native`). |
+| `free_port` was one `taskkill` by port plus a 500 ms sleep. | Multi-layer kill, self-PID excluded, polls up to 240 s. |
+| Backend reads `PORT`/`HOST`, not `MCP_PORT`; spawn set only `MCP_PORT`. | Spawn also sets `PORT` and `HOST`. |
+| Frontend `API_BASE = ""` and about 40 raw `fetch("/api/...")` calls: in the Tauri webview these hit `tauri://localhost`, so the UI could never reach its backend. WebSockets used `location.host` or hardcoded `ws://127.0.0.1:11010`. | `API_BASE` from `VITE_API_BASE` (baked by `native/build.ps1`); `main.tsx` fetch shim prefixes root-relative `/api`, `/health`, `/mcp`; WebSockets use `wsOrigin()`. |
+| `web_sota/biome.json` used `"preset": "recommended"`, rejected by Biome 2.4, so the pre-commit gate failed on every commit. | `"recommended": true`. |
+
 ## Build Failure - 2026-08-26 14:39:56
 
 ### Build FAILED (exit 1)
