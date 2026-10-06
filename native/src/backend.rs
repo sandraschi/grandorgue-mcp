@@ -14,7 +14,10 @@ use tauri::{AppHandle, Emitter, Manager};
 pub struct BackendProcess(pub Mutex<Option<Child>>);
 
 const BACKEND_NAME: &str = "grandorgue-mcp-backend.exe";
-const BACKEND_PORT: u16 = 11010;
+// Operator backend port (claimed as grandorgue-mcp-native). Never the dev backend (11010) or
+// frontend (11011) port: the installed app and `start.ps1` must run side by side. Keep in sync
+// with native/build.ps1 (VITE_API_BASE).
+const BACKEND_PORT: u16 = 11244;
 const BACKEND_TAG: &str = "grandorgue-mcp-backend-x86_64-pc-windows-msvc.exe";
 const ENV_PORT: &str = "MCP_PORT";
 const ENV_HOST: &str = "MCP_HOST";
@@ -66,18 +69,74 @@ pub fn materialize_backend(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(clean)
 }
 
-fn free_port(port: u16) {
+/// Multi-layer kill, then poll until the port is actually free.
+/// Runs inside the native process itself, so every native-image kill excludes our own PID.
+fn free_port(port: u16) -> bool {
     #[cfg(windows)]
     {
-        let script = format!(
-            "Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue \
-            | ForEach-Object {{ taskkill /F /PID `$_.OwningProcess /T 2>$null }}"
+        let self_pid = std::process::id();
+        let img_kill = format!(
+            "Stop-Process -Name 'grandorgue-mcp-backend' -Force -ErrorAction SilentlyContinue; \
+             Get-Process -Name 'grandorgue-mcp-native' -ErrorAction SilentlyContinue \
+             | Where-Object {{ $_.Id -ne {self_pid} }} | Stop-Process -Force -ErrorAction SilentlyContinue; \
+             taskkill /F /IM grandorgue-mcp-backend.exe /T 2>$null"
         );
-        let _ = Command::new("powershell.exe")
-            .args(["-NoProfile", "-Command", &script])
-            .stdout(Stdio::null()).stderr(Stdio::null())
-            .status();
-        thread::sleep(Duration::from_millis(500));
+        let port_kill = format!(
+            "Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue \
+            | ForEach-Object {{ taskkill /F /PID $_.OwningProcess /T 2>$null }}"
+        );
+        for script in [&img_kill, &port_kill] {
+            let _ = Command::new("powershell.exe")
+                .args(["-NoProfile", "-Command", script])
+                .stdout(Stdio::null()).stderr(Stdio::null())
+                .status();
+        }
+
+        let poll_script = format!(
+            "if (Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue) {{ 1 }} else {{ 0 }}"
+        );
+        for i in 0..240 {
+            let occupied = Command::new("powershell.exe")
+                .args(["-NoProfile", "-Command", &poll_script])
+                .stdout(Stdio::piped()).stderr(Stdio::null())
+                .output()
+                .ok()
+                .and_then(|o| String::from_utf8(o.stdout).ok())
+                .and_then(|s| s.trim().parse::<u32>().ok())
+                .unwrap_or(1);
+            if occupied == 0 {
+                return true;
+            }
+            if i == 5 {
+                for script in [&img_kill, &port_kill] {
+                    let _ = Command::new("powershell.exe")
+                        .args(["-NoProfile", "-Command", script])
+                        .stdout(Stdio::null()).stderr(Stdio::null())
+                        .status();
+                }
+            }
+            if i == 15 {
+                // Still held (likely an elevated orphan): one UAC-elevated kill.
+                let elevated = format!(
+                    "Start-Process powershell -Verb RunAs -WindowStyle Hidden -ArgumentList \
+                     '-NoProfile -Command \"Stop-Process -Name grandorgue-mcp-backend -Force -ErrorAction SilentlyContinue; \
+                     taskkill /F /IM grandorgue-mcp-backend.exe /T 2>$null; \
+                     Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | \
+                     ForEach-Object {{ taskkill /F /PID $_.OwningProcess /T 2>$null }}\"'"
+                );
+                let _ = Command::new("powershell.exe")
+                    .args(["-NoProfile", "-Command", &elevated])
+                    .stdout(Stdio::null()).stderr(Stdio::null())
+                    .status();
+            }
+            thread::sleep(Duration::from_secs(1));
+        }
+        false
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = port;
+        true
     }
 }
 
@@ -90,7 +149,11 @@ fn stop_managed_child(state: &BackendProcess) {
 
 pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, String> {
     stop_managed_child(state);
-    free_port(BACKEND_PORT);
+    if !free_port(BACKEND_PORT) {
+        let msg = format!("Could not free port {BACKEND_PORT} after 240s");
+        log_line(&app, &msg);
+        return Err(msg);
+    }
 
     let backend_path = materialize_backend(&app)?;
     log_line(&app, &format!("spawning {} on port {}", backend_path.display(), BACKEND_PORT));
@@ -98,6 +161,9 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
     let mut command = Command::new(&backend_path);
     command
         .env(ENV_PORT, BACKEND_PORT.to_string())
+        // grandorgue_mcp.server reads PORT / HOST (not MCP_PORT)
+        .env("PORT", BACKEND_PORT.to_string())
+        .env("HOST", "127.0.0.1")
         .env(ENV_HOST, "127.0.0.1")
         .env(ENV_TAURI, "1")
         .stdout(Stdio::null())

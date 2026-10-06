@@ -26,6 +26,8 @@ foreach ($dir in $frontendDirs) {
             throw "TypeScript compilation failed - fix all errors before building NSIS installer"
         }
 
+        # Operator backend port (grandorgue-mcp-native claim); same value as backend.rs BACKEND_PORT.
+        $env:VITE_API_BASE = "http://127.0.0.1:11244"
         npm run build
         if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
         Pop-Location
@@ -94,4 +96,3 @@ if (Test-Path $strayExe) { Remove-Item $strayExe -Force; Write-Host "  Cleaned s
 
 Write-Host "=== Build complete ===" -ForegroundColor Green
 Write-Host "Ship: $nsisDir\*.exe"
-

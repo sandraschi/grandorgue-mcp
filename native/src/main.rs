@@ -1,26 +1,25 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod backend;
-use backend::{BackendProcess, materialize_backend};
-use std::process::{Command, Stdio};
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
+use backend::{spawn_backend, BackendProcess};
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
+/// Spawns (or respawns) the sidecar. Also the target of the UI "Restart Backend" button:
+/// `spawn_backend` stops the old child and frees the port before starting a new one.
 #[tauri::command]
-async fn start_backend(app: tauri::AppHandle, state: tauri::State<'_, BackendProcess>) -> Result<String, String> {
-    let path = materialize_backend(&app)?;
-    let child = Command::new(&path)
-        .env("GRANDORGUE_TAURI", "1")
-        .args(["--http", "--port", "11010"])
-        .creation_flags(0x0800_0000)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("Failed to start backend: {e}"))?;
-    *state.0.lock().unwrap() = Some(child);
-    Ok("Backend starting".into())
+async fn start_backend(
+    app: tauri::AppHandle,
+    state: tauri::State<'_, BackendProcess>,
+) -> Result<String, String> {
+    spawn_backend(app, &state)
+}
+
+fn stop_backend(app: &tauri::AppHandle) {
+    if let Some(mut child) = app.state::<BackendProcess>().0.lock().unwrap().take() {
+        let _ = child.kill();
+        let _ = child.wait();
+    }
 }
 
 fn main() {
@@ -33,12 +32,11 @@ fn main() {
         .setup(|app| {
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
-                match start_backend(handle.clone(), handle.state::<BackendProcess>()).await {
-                    Ok(_) => {}
-                    Err(e) => {
-                        eprintln!("Backend error: {}", e);
-                        let _ = handle.emit("backend-status", format!("error: {}", e));
-                    }
+                if let Err(e) =
+                    start_backend(handle.clone(), handle.state::<BackendProcess>()).await
+                {
+                    eprintln!("Backend error: {}", e);
+                    let _ = handle.emit("backend-status", format!("error: {}", e));
                 }
             });
             #[cfg(debug_assertions)]
@@ -50,10 +48,11 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("error building tauri application")
         .run(|app, event| {
-            if let tauri::RunEvent::Exit = event {
-                if let Some(mut child) = app.state::<BackendProcess>().0.lock().unwrap().take() {
-                    let _ = child.kill();
-                }
+            if matches!(
+                event,
+                tauri::RunEvent::Exit | tauri::RunEvent::ExitRequested { .. }
+            ) {
+                stop_backend(app);
             }
         });
 }
