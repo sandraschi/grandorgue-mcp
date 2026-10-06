@@ -8,7 +8,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended",
+      "recommended": true,
       "correctness": { "useExhaustiveDependencies": "off" },
       "style": { "noNonNullAssertion": "off" },
       "suspicious": {
