@@ -10,29 +10,33 @@ test("dashboard loads", async ({ page }) => {
 
 test("sidebar navigation works", async ({ page }) => {
   await page.goto(BASE);
-  await page.click("text=Console");
-  await expect(page.locator("text=Tutti")).toBeVisible();
+  // The sidebar is icon-only (title attribute, no text), so navigate by href.
+  const nav = (path: string) => page.locator(`aside a[href="${path}"]`).click();
 
-  await page.click("text=Library");
-  await expect(page.locator("text=Organ Library")).toBeVisible();
+  await nav("/console");
+  await expect(page.getByTestId("console-page")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tutti", exact: true })).toBeVisible();
 
-  await page.click("text=Marketplace");
-  await expect(page.locator("text=Available Sample Sets")).toBeVisible();
+  await nav("/library");
+  await expect(page.getByRole("heading", { name: "Organ Library" })).toBeVisible();
 
-  await page.click("text=Memory");
-  await expect(page.locator("text=Combination Memory")).toBeVisible();
+  await nav("/marketplace");
+  await expect(page.getByText("Available Sample Sets")).toBeVisible();
 
-  await page.click("text=Record");
-  await expect(page.locator("text=MIDI Recorder")).toBeVisible();
+  await nav("/combinations");
+  await expect(page.getByRole("heading", { name: "Combination Memory" })).toBeVisible();
 
-  await page.click("text=Mixer");
-  await expect(page.locator("text=Audio Mixer")).toBeVisible();
+  await nav("/record");
+  await expect(page.getByRole("heading", { name: "MIDI Recorder" })).toBeVisible();
+
+  await nav("/mixer");
+  await expect(page.getByRole("heading", { name: "Audio Mixer" })).toBeVisible();
 });
 
 test("dashboard shows MIDI and GO status", async ({ page }) => {
   await page.goto(BASE);
-  await expect(page.locator("text=MIDI")).toBeVisible();
-  await expect(page.locator("text=GO")).toBeVisible();
+  await expect(page.getByTestId("kpi-midi-bridge")).toBeVisible();
+  await expect(page.getByTestId("kpi-grandorgue")).toBeVisible();
 });
 
 test("health check via API", async ({ request }) => {
