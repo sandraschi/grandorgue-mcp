@@ -84,6 +84,14 @@ cd web_sota && bun run dev
 5. From the Dashboard, click **Start GrandOrgue** then **Connect MIDI**
 6. GrandOrgue must be configured to use the virtual MIDI ports (see [docs/MIDI_SETUP.md](docs/MIDI_SETUP.md))
 
+### Web Console Tips
+
+- **Ctrl+K** (or the "Jump to..." button) opens a command palette: type to jump to any page or run Start/Stop GrandOrgue, Connect/Disconnect MIDI and Panic.
+- **Panic** sits in the top bar on every page and releases all notes immediately.
+- The Dashboard shows a "Get playing" checklist (start GrandOrgue, connect MIDI, load an organ, play) that ticks off as each step is done.
+- The sidebar is grouped (Play, Library, Agent, System) and collapses to icons; the choice is remembered.
+- **Ctrl + mouse wheel** zooms the whole UI.
+
 ---
 
 ## Ports

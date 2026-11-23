@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- 2026-11-23 web console pass: grouped, labeled, collapsible sidebar (fixes "/" always highlighted);
+  Ctrl+K command palette (pages + Start/Stop GO, MIDI connect, Panic); always-visible Panic button and
+  status pills in the top bar; one shared status poll (zustand store) instead of two; Dashboard
+  "Get playing" checklist and status cards with live indicators; gold focus rings and reduced-motion
+  support; e2e selectors fixed (icon-only sidebar, strict mode) plus palette, sidebar and panic tests.
+
 - 2026-11-23 revival pass: refreshed `uv.lock` (fastmcp 3.4.4 -> 3.4.11, prefab-ui 0.20.2 -> 0.21.1,
   fastapi 0.136 -> 0.165, plus transitive); `.claude-plugin/plugin.json` version aligned to 0.3.0;
   15 new tests (MIDI bridge routing/clamping, response helpers, fleet parsing, last-organ state),

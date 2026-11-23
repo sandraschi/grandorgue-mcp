@@ -8,6 +8,24 @@
   }
   body {
     @apply bg-zinc-950 text-zinc-100 antialiased;
+    background-image: radial-gradient(
+      1100px 480px at 75% -8%,
+      rgba(201, 168, 76, 0.07),
+      transparent
+    );
+    background-attachment: fixed;
+  }
+  /* Keyboard users always see where focus is (gold, high contrast on dark). */
+  :focus-visible {
+    outline: 2px solid #c9a84c;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
   }
   ::-webkit-scrollbar {
     width: 6px;

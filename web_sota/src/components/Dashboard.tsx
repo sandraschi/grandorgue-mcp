@@ -1,37 +1,17 @@
-import { AlertTriangle, Link, Play, RotateCcw, Square, Unlink } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ApiError, api, type MidiPort, type OrganStatus } from "@/api/client";
+import { AlertTriangle, Check, Link, Play, RotateCcw, Square, Unlink } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import { ApiError, api } from "@/api/client";
 import { LlmOnboarding } from "@/components/llm/LlmOnboarding";
-
-// Backend port is owned by fleet-start.config.ps1 / WEBAPP_PORTS.md (11010).
-// Keep it in one constant so the UI never hardcodes port literals (P1).
-const BACKEND_PORT = 11010;
+import { useStatusStore } from "@/store/status";
 
 export default function Dashboard() {
-  const [status, setStatus] = useState<OrganStatus | null>(null);
-  const [ports, setPorts] = useState<{ inputs: MidiPort[]; outputs: MidiPort[] } | null>(null);
-  const [lastOrgan, setLastOrgan] = useState<{ name: string; path: string } | null>(null);
+  const { status, ports, lastOrgan, backendOnline, error, setError } = useStatusStore();
+  const storeRefresh = useStatusStore((s) => s.refresh);
   const [loading, setLoading] = useState(false);
   const [autoLoading, setAutoLoading] = useState(false);
-  const [backendOnline, setBackendOnline] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
-    try {
-      const [s, p, lo] = await Promise.all([api.status(), api.midiPorts(), api.lastOrgan()]);
-      setStatus(s);
-      setPorts(p);
-      setBackendOnline(true);
-      if (lo.organ) setLastOrgan(lo.organ);
-    } catch (err) {
-      setBackendOnline(false);
-      if (err instanceof ApiError) setError(err.message);
-      else
-        setError(
-          `Backend unreachable on port ${BACKEND_PORT}. Start it with: uv run grandorgue-mcp`,
-        );
-    }
-  };
+  const refresh = () => storeRefresh(true);
 
   useEffect(() => {
     refresh();
@@ -159,6 +139,82 @@ export default function Dashboard() {
         </div>
       )}
 
+      {backendOnline && (
+        <QuickStart
+          steps={[
+            {
+              id: "go",
+              title: "Start GrandOrgue",
+              done: !!status?.go_running,
+              action: (
+                <button
+                  onClick={handleStart}
+                  disabled={loading}
+                  className="rounded-lg bg-green-900 px-3 py-1.5 text-xs font-medium text-green-200 hover:bg-green-800 disabled:opacity-40 transition-colors"
+                >
+                  Start
+                </button>
+              ),
+            },
+            {
+              id: "midi",
+              title: "Connect the MIDI bridge",
+              done: !!status?.midi_connected,
+              action: (
+                <button
+                  onClick={handleConnect}
+                  className="rounded-lg bg-blue-900 px-3 py-1.5 text-xs font-medium text-blue-200 hover:bg-blue-800 transition-colors"
+                >
+                  Connect
+                </button>
+              ),
+            },
+            {
+              id: "organ",
+              title: "Load an organ",
+              done: !!status?.organ?.loaded,
+              action: lastOrgan ? (
+                <button
+                  onClick={handleAutoLoad}
+                  disabled={autoLoading}
+                  className="rounded-lg bg-organ-gold/20 px-3 py-1.5 text-xs font-medium text-organ-gold hover:bg-organ-gold/30 disabled:opacity-40 transition-colors"
+                >
+                  {autoLoading ? "Loading..." : `Reload ${lastOrgan.name}`}
+                </button>
+              ) : (
+                <RouterLink
+                  to="/library"
+                  className="rounded-lg bg-organ-gold/20 px-3 py-1.5 text-xs font-medium text-organ-gold hover:bg-organ-gold/30 transition-colors"
+                >
+                  Open Library
+                </RouterLink>
+              ),
+            },
+            {
+              id: "play",
+              title: "Play something",
+              done: false,
+              action: (
+                <span className="flex gap-2">
+                  <RouterLink
+                    to="/console"
+                    className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-100 hover:bg-zinc-600 transition-colors"
+                  >
+                    Console
+                  </RouterLink>
+                  <RouterLink
+                    to="/midi-player"
+                    className="rounded-lg bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-100 hover:bg-zinc-600 transition-colors"
+                  >
+                    Bach player
+                  </RouterLink>
+                </span>
+              ),
+            },
+          ]}
+        />
+      )}
+
       {/* Status Cards */}
       <div className="grid grid-cols-4 gap-4">
         <Card
@@ -271,13 +327,70 @@ export default function Dashboard() {
 function Card({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
   return (
     <div
-      className="bg-zinc-900 rounded-lg p-4 border border-zinc-800"
+      className="rounded-xl border border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-900/60 p-4"
       data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, "-")}`}
     >
-      <div className="text-sm text-zinc-500 mb-1">{label}</div>
-      <div className={`text-sm font-medium ${ok ? "text-green-400" : "text-zinc-400"}`}>
+      <div className="mb-1.5 flex items-center gap-2 text-xs uppercase tracking-wider text-zinc-400">
+        <span
+          className={`h-2 w-2 rounded-full ${ok ? "bg-green-400 shadow-[0_0_8px] shadow-green-500/60" : "bg-zinc-600"}`}
+        />
+        {label}
+      </div>
+      <div className={`truncate text-sm font-medium ${ok ? "text-green-300" : "text-zinc-300"}`}>
         {value}
       </div>
     </div>
+  );
+}
+
+interface QuickStep {
+  id: string;
+  title: string;
+  done: boolean;
+  action: ReactNode;
+}
+
+function QuickStart({ steps }: { steps: QuickStep[] }) {
+  // The last step ("play") has no completion signal, so progress counts the setup steps.
+  const setup = steps.slice(0, -1);
+  const doneCount = setup.filter((s) => s.done).length;
+  const ready = doneCount === setup.length;
+  return (
+    <section
+      data-testid="quick-start"
+      className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-100">
+          {ready ? "Ready to play" : "Get playing in four steps"}
+        </h2>
+        <span className="text-xs text-zinc-400">
+          {doneCount}/{setup.length} set up
+        </span>
+      </div>
+      <div className="mb-3 h-1 overflow-hidden rounded-full bg-zinc-800">
+        <div
+          className="h-full rounded-full bg-organ-gold transition-all duration-500"
+          style={{ width: `${(doneCount / setup.length) * 100}%` }}
+        />
+      </div>
+      <ol className="space-y-1.5">
+        {steps.map((s, i) => (
+          <li key={s.id} className="flex items-center gap-3 rounded-lg px-2 py-1.5 text-sm">
+            <span
+              className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-semibold ${
+                s.done ? "bg-green-900 text-green-300" : "bg-zinc-800 text-zinc-300"
+              }`}
+            >
+              {s.done ? <Check size={13} /> : i + 1}
+            </span>
+            <span className={`flex-1 ${s.done ? "text-zinc-400 line-through" : "text-zinc-100"}`}>
+              {s.title}
+            </span>
+            {!s.done && s.action}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import AudioMixer from "./components/AudioMixer";
 import CombinationMemory from "./components/CombinationMemory";
+import CommandPalette from "./components/CommandPalette";
 import Dashboard from "./components/Dashboard";
 import FloatingChat from "./components/FloatingChat";
 import Marketplace from "./components/Marketplace";
@@ -26,9 +27,11 @@ import { InboxPage } from "./pages/InboxPage";
 import { LogsPage } from "./pages/LogsPage";
 import { SkillsPage } from "./pages/SkillsPage";
 import { ToolsPage } from "./pages/ToolsPage";
+import { useStatusPolling } from "./store/status";
 
 export default function App() {
   useZoom();
+  useStatusPolling();
   // Tauri desktop: listen for the backend-status event emitted by backend.rs
   // (health poll result). Falls back to HTTP polling in the dev browser —
   // Dashboard already polls /api/status every 3 s, this is only the push path.
@@ -81,6 +84,7 @@ export default function App() {
           </main>
         </div>
         <FloatingChat />
+        <CommandPalette />
       </div>
     </LoggerProvider>
   );
