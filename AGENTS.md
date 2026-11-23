@@ -24,3 +24,9 @@ GrandOrgue pipe organ simulator MCP server — MIDI bridge, organ control, sampl
 - `CLAUDE.md` — Claude Code context
 
 Install docs: follow mcp-central-docs/standards/AGENT_INSTALL_REFERENCE.md
+
+## Repo Rules
+- Line endings: LF only. `.gitattributes` enforces `eol=lf`; only `*.bat` stays CRLF. Never commit CRLF.
+- Branch hygiene: single trunk (`main`). No leftover agent branches, WIP branches or long-lived stashes. Merge or delete the same day.
+- Applying a standard or template must never remove or damage existing content unless explicitly commanded.
+- Gates before push: `just gates-green` (ruff, format check, pytest, tsc).

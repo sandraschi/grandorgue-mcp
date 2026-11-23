@@ -45,7 +45,7 @@ pythonpath = ["src"]
 addopts = [
     "--cov=grandorgue_mcp",
     "--cov-report=term-missing",
-    "--cov-fail-under=30",
+    "--cov-fail-under=33",
 ]
 
 [tool.ruff]
